@@ -27,6 +27,8 @@ OpenModelOps is an MIT-licensed, vendor-neutral production reference designed to
                     Prometheus / Grafana / logs
 ```
 
+The current implementation also includes an approval-gated AIOps control plane, OIDC/JWT verification and RBAC primitives, feature contracts, tenant-isolated Qdrant retrieval, and reproducible RayJob generation for distributed CPU/GPU training.
+
 ## Guarantees demonstrated
 
 - Explicit lifecycle state machines prevent unreviewed promotion.
@@ -49,6 +51,7 @@ Then open:
 
 - MLOps API: `http://localhost:8001/docs`
 - Agent API: `http://localhost:8002/docs`
+- AIOps API: `http://localhost:8003/docs`
 - MLflow: `http://localhost:5000`
 - Grafana: `http://localhost:3000`
 - Prometheus: `http://localhost:9090`
@@ -63,12 +66,42 @@ docker compose up --build agent-api
 
 For an NVIDIA GPU environment, set `MODEL_PROVIDER=vllm`, point `MODEL_BASE_URL` at an approved vLLM server, and set `MODEL_ID` to its served model name. Both paths use the same governed `ModelEndpoint` contract.
 
+Optional local infrastructure is isolated into Compose profiles:
+
+```bash
+docker compose --profile identity --profile retrieval \
+  --profile feature-store --profile distributed-training up -d
+```
+
+The included Keycloak credentials are development defaults only. Set `KEYCLOAK_ADMIN_PASSWORD` before shared use. Production requires TLS, external secrets, database-backed identity, workload identity and least-privilege network policies.
+
+## Implemented versus integration-ready
+
+| Capability | Current level | Evidence |
+|---|---|---|
+| Model lifecycle and release governance | Implemented | `platforms/mlops/` |
+| Guarded agent runtime and feedback queue | Implemented | `platforms/agents/` |
+| Approval-gated incident remediation | Implemented | `platforms/aiops/` |
+| OIDC verification and RBAC | Implemented library; Keycloak is an optional local profile | `packages/security/` |
+| Feature validation | Implemented; Feast/Redis deployment is integration-ready | `platforms/features/`, `feature_store/` |
+| Vector retrieval | Implemented Qdrant adapter with mandatory tenant filtering | `platforms/retrieval/` |
+| Distributed training | Implemented immutable RayJob specification; requires KubeRay in Kubernetes | `platforms/training/` |
+| Open-weight inference | Ollama and vLLM adapters implemented | `platforms/agents/providers.py` |
+
+“Integration-ready” is deliberately not presented as a deployed production service: real production identity, storage, GPUs, DNS, TLS, backups and cloud policies must be supplied by the target environment.
+
 ## Repository map
 
 ```text
 platforms/mlops/       lifecycle and promotion service
 platforms/agents/      safe agent runtime and feedback service
+platforms/aiops/       incident workflow and controlled remediation API
+platforms/features/    feature contracts and validation
+platforms/retrieval/   tenant-isolated vector retrieval
+platforms/training/    reproducible Ray/Kubernetes training specs
 packages/contracts/    shared, versioned API contracts only
+packages/security/     OIDC verification and RBAC
+feature_store/         Feast-compatible repository configuration
 infra/compose/         runnable local production-like stack
 infra/kubernetes/      probes, policies, autoscaling and disruption controls
 observability/         metrics and dashboards

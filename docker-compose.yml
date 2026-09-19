@@ -26,11 +26,54 @@ services:
     tmpfs: ["/tmp"]
     security_opt: ["no-new-privileges:true"]
 
+  aiops-api:
+    build:
+      context: .
+      args: { SERVICE: aiops }
+    ports: ["8003:8000"]
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+
   ollama:
     image: ollama/ollama:0.11.4
     profiles: ["local-models"]
     ports: ["11434:11434"]
     volumes: ["ollama-data:/root/.ollama"]
+    restart: unless-stopped
+
+  qdrant:
+    image: qdrant/qdrant:v1.15.1
+    profiles: ["retrieval"]
+    ports: ["6333:6333"]
+    volumes: ["qdrant-data:/qdrant/storage"]
+    restart: unless-stopped
+
+  redis:
+    image: redis:8.2-alpine
+    profiles: ["feature-store"]
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6379:6379"]
+    volumes: ["redis-data:/data"]
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3.2
+    profiles: ["identity"]
+    command: ["start-dev", "--health-enabled=true"]
+    ports: ["8080:8080"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-change-me-before-shared-use}
+    restart: unless-stopped
+
+  ray-head:
+    image: rayproject/ray:2.49.0-py312
+    profiles: ["distributed-training"]
+    command: ["ray", "start", "--head", "--dashboard-host=0.0.0.0", "--block"]
+    ports: ["8265:8265", "10001:10001"]
+    shm_size: 2gb
     restart: unless-stopped
 
   mlflow:
@@ -64,3 +107,5 @@ volumes:
   prometheus-data:
   grafana-data:
   ollama-data:
+  qdrant-data:
+  redis-data:
