@@ -1,0 +1,6 @@
+beacode:
+  target_branch: main
+  fork_support: false
+  review_request_changes: true
+  reviewer_login: beacode[bot]
+  pr_checks: []

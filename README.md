@@ -6,6 +6,7 @@ OpenModelOps is an MIT-licensed, vendor-neutral **AI SRE Factory** designed to o
 - **LLMOps** — open-weight model catalog, evaluation, fine-tuning lineage, Ollama/vLLM serving and model routing.
 - **AgentOps** — bounded tools, isolated memory, fail-closed guardrails, feedback, evaluation and controlled agent releases.
 - **AIOps** — operational signals, anomaly correlation, incident assistance and approval-gated remediation.
+- **ReviewOps** — complete PR review retrieval, fork-policy latching, opt-in security findings and human-approved suggestion handling.
 
 ## Architecture
 
@@ -55,6 +56,7 @@ Then open:
 - Agent API: `http://localhost:8002/docs`
 - AIOps API: `http://localhost:8003/docs`
 - Factory API: `http://localhost:8004/docs`
+- Review Agent API: `http://localhost:8005/docs`
 - MLflow: `http://localhost:5000`
 - Grafana: `http://localhost:3000`
 - Prometheus: `http://localhost:9090`
@@ -97,6 +99,7 @@ The included Keycloak credentials are development defaults only. Set `KEYCLOAK_A
 | Ragas and DeepEval | Implemented optional runners and deterministic quality gate | `platforms/evaluation/` |
 | LangChain and LangGraph | Implemented optional Runnable and bounded corrective graph | `platforms/rag/` |
 | MLflow synchronization | Implemented registry, alias and governance-tag REST adapter | `platforms/integrations/mlflow.py` |
+| Safety-gated PR review agent | Implemented review/comment retrieval, fork latch, security opt-in and approval gate | `platforms/reviewer/` |
 
 “Integration-ready” is deliberately not presented as a deployed production service: real production identity, storage, GPUs, DNS, TLS, backups and cloud policies must be supplied by the target environment.
 
@@ -110,6 +113,7 @@ platforms/features/    feature contracts and validation
 platforms/retrieval/   tenant-isolated vector retrieval
 platforms/training/    reproducible Ray/Kubernetes training specs
 platforms/factory/     self-service workload API and release scorecards
+platforms/reviewer/    GitHub/GHES review aggregation and approval gate
 platforms/rag/         corrective RAG plus LangChain/LangGraph boundaries
 platforms/evaluation/  Ragas/DeepEval runners and fail-closed quality gates
 packages/contracts/    shared, versioned API contracts only
@@ -129,3 +133,4 @@ See the [product requirements](docs/PRODUCT_REQUIREMENTS.md) for personas, measu
 See [durable governance](docs/DURABLE_GOVERNANCE.md) for persistence, OIDC, signed evidence and release-policy configuration.
 See [integration contracts](docs/INTEGRATION_CONTRACTS.md) for ARIA, On-Call SRE, model-serving, agent-gateway and evaluation boundaries.
 See [observability and evaluation](docs/OBSERVABILITY_AND_EVALUATION.md) for framework support levels, privacy controls and release-gate behavior.
+See [review agent](docs/REVIEW_AGENT.md) for PR review retrieval, fork latching, security checks and human approval rules.

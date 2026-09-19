@@ -39,6 +39,23 @@ services:
     tmpfs: ["/tmp"]
     security_opt: ["no-new-privileges:true"]
 
+  reviewer-api:
+    build:
+      context: .
+      args: { SERVICE: reviewer }
+    ports: ["8005:8000"]
+    environment:
+      REVIEW_AGENT_CONFIG: .beacode/beacode-config.yaml
+      REVIEW_AGENT_DB: /data/reviewer.db
+      GITHUB_API_URL: ${GITHUB_API_URL:-https://api.github.com}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      AUTH_MODE: ${AUTH_MODE:-development}
+    volumes: ["reviewer-data:/data"]
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+
   factory-api:
     build:
       context: .
@@ -162,6 +179,7 @@ volumes:
   qdrant-data:
   redis-data:
   factory-db-data:
+  reviewer-data:
 
 configs:
   factory-schema:
