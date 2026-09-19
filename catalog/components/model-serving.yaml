@@ -1,0 +1,17 @@
+id: model-serving-runtime
+name: Model Serving Runtime
+domain: llmops
+owner: model-platform
+source: https://github.com/KumarSravan77/model-serving-platform
+maturity: implemented
+interfaceVersion: v1
+healthEndpoint: /health/live
+capabilities:
+  - inference-gateway
+  - kubernetes-model-operator
+  - load-benchmarking
+evidence:
+  - internal/gateway/gateway_test.go
+  - internal/operator/controller_test.go
+dependencies:
+  - openmodelops-factory

@@ -1,0 +1,17 @@
+id: evaluation-engine
+name: Automated Evaluation Engine
+domain: shared
+owner: model-quality
+source: https://github.com/KumarSravan77/automated-eval-harness
+maturity: implemented
+interfaceVersion: v1
+healthEndpoint: /health/live
+capabilities:
+  - golden-datasets
+  - regression-gates
+  - quality-reports
+evidence:
+  - tests/test_harness.py
+  - datasets/golden.jsonl
+dependencies:
+  - openmodelops-factory

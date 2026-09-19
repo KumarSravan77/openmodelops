@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+from functools import lru_cache
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
+from platforms.factory.catalog import Catalog
 from platforms.factory.domain import SLO, FactorySpec, FactoryWorkload, GateResult, GateStatus, WorkloadKind
 
 app = FastAPI(title="OpenModelOps AI SRE Factory", version="0.1.0")
 workloads: dict[str, FactoryWorkload] = {}
+CATALOG_PATH = Path(__file__).resolve().parents[2] / "catalog" / "components"
 
 
 class SLORequest(BaseModel):
@@ -53,6 +58,16 @@ def capabilities() -> dict[str, list[str]]:
         "agentops": ["guardrails", "bounded-tools", "tracing", "feedback", "release-governance"],
         "ai_sre": ["slos", "scorecards", "observability", "incident-workflow", "verified-remediation"],
     }
+
+
+@lru_cache
+def component_catalog() -> Catalog:
+    return Catalog.load(CATALOG_PATH)
+
+
+@app.get("/components")
+def components() -> list[dict[str, object]]:
+    return component_catalog().summary()
 
 
 @app.post("/workloads")

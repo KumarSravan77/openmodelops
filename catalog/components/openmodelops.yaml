@@ -1,0 +1,15 @@
+id: openmodelops-factory
+name: OpenModelOps AI SRE Factory
+domain: shared
+owner: platform-engineering
+source: https://github.com/KumarSravan77/openmodelops
+maturity: verified
+interfaceVersion: v1
+healthEndpoint: /health/live
+capabilities:
+  - workload-registration
+  - release-scorecards
+  - lifecycle-governance
+evidence:
+  - .github/workflows/ci.yml
+  - tests/test_factory.py

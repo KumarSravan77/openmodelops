@@ -1,0 +1,17 @@
+id: agent-policy-gateway
+name: Production Agent Gateway
+domain: agentops
+owner: agent-platform
+source: https://github.com/KumarSravan77/production-agent-gateway
+maturity: implemented
+interfaceVersion: v1
+healthEndpoint: /health
+capabilities:
+  - tool-policy
+  - approval
+  - audited-execution
+evidence:
+  - tests/test_gateway.py
+  - docs/THREAT_MODEL.md
+dependencies:
+  - openmodelops-factory

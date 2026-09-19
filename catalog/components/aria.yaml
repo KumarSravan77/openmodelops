@@ -1,0 +1,18 @@
+id: aria-intelligence
+name: ARIA AI SRE Intelligence Plane
+domain: ai-sre
+owner: ai-sre
+source: https://github.com/KumarSravan77/aria
+maturity: implemented
+interfaceVersion: v1
+healthEndpoint: /health
+capabilities:
+  - incident-investigation
+  - operational-rag
+  - remediation-recommendation
+  - feedback-analysis
+evidence:
+  - README.md
+  - docs/AI_AGENT_OBSERVABILITY_AND_FEEDBACK.md
+dependencies:
+  - openmodelops-factory

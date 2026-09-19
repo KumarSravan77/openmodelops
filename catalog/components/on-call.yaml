@@ -1,0 +1,18 @@
+id: on-call-authority
+name: On-Call SRE Incident Authority
+domain: ai-sre
+owner: reliability-engineering
+source: https://github.com/KumarSravan77/on-call-sre-agent
+maturity: implemented
+interfaceVersion: v1
+healthEndpoint: /healthz
+capabilities:
+  - alert-routing
+  - escalation
+  - incident-lifecycle
+  - remediation-approval
+evidence:
+  - README.md
+  - tests/test_platform.py
+dependencies:
+  - aria-intelligence

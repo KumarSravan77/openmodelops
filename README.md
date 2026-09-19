@@ -114,3 +114,4 @@ docs/                  architecture, security, SLOs and runbooks
 
 See [production readiness](docs/PRODUCTION_READINESS.md) for the distinction between implemented controls and cloud deployment work that requires real infrastructure and credentials.
 See [AI SRE Factory](docs/AI_SRE_FACTORY.md) for the unified workload contract, release gates and delivery roadmap.
+See the [product requirements](docs/PRODUCT_REQUIREMENTS.md) for personas, measurable requirements, acceptance criteria, safety invariants and delivery milestones.
