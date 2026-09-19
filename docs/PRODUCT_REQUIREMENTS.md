@@ -42,8 +42,8 @@ OpenModelOps provides one self-service factory contract and integrates specializ
 | FR-04 | Lifecycle governance | Invalid approve, provision, release, suspend and retire transitions fail closed | Implemented |
 | FR-05 | Component catalog | Registered services declare owner, domain, interface, health check, capabilities, maturity and evidence | Implemented |
 | FR-06 | Interoperability events | Events include tenant, trace, schema, idempotency and CloudEvents-compatible envelope fields | Implemented |
-| FR-07 | Durable control-plane state | Workload, gate and audit state survives process and node failure | Planned |
-| FR-08 | Federated identity | Human and workload actors derive from OIDC/workload identity, never request bodies | Planned |
+| FR-07 | Durable control-plane state | Workload, gate and audit state survives process and node failure | Implemented PostgreSQL-compatible store; HA validation pending |
+| FR-08 | Federated identity | Human and workload actors derive from OIDC/workload identity, never request bodies | Implemented OIDC enforcement; provider integration pending |
 | FR-09 | Reconciliation | Factory controller reconciles approved specifications into Kubernetes resources | Planned |
 | FR-10 | Evaluation integration | Evaluation engine signs results consumed by quality gates | Planned |
 | FR-11 | Incident integration | ARIA evidence enters On-Call authority through signed, replay-resistant events | Existing externally; adapter planned |

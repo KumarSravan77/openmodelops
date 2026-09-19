@@ -25,6 +25,8 @@ class Identity:
 
 
 class OIDCVerifier:
+    ALLOWED_ALGORITHMS = frozenset({"RS256", "ES256", "EdDSA"})
+
     def __init__(self, issuer: str, audience: str, cache_seconds: int = 3600) -> None:
         self.issuer = issuer.rstrip("/")
         self.audience = audience
@@ -42,6 +44,8 @@ class OIDCVerifier:
     def verify(self, token: str) -> Identity:
         try:
             header = jwt.get_unverified_header(token)
+            if header.get("alg") not in self.ALLOWED_ALGORITHMS:
+                raise AuthenticationError("token algorithm is not allowed")
             key = next(item for item in self._keys()["keys"] if item["kid"] == header["kid"])
             payload = jwt.decode(
                 token, jwt.PyJWK(key).key, algorithms=[header["alg"]], audience=self.audience, issuer=self.issuer

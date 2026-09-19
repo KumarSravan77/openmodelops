@@ -1,8 +1,10 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from fastapi import HTTPException
 
 from packages.security.auth import AuthorizationError, Identity, require_roles
+from packages.security.fastapi_auth import current_identity
 from platforms.aiops.workflow import Incident, IncidentState, Remediation, Signal
 from platforms.features.contracts import FeatureContractError, FeatureDefinition, FeatureRecord, FeatureService
 from platforms.retrieval.vector_store import QdrantStore
@@ -13,6 +15,14 @@ def test_rbac_is_fail_closed() -> None:
     identity = Identity("operator-1", frozenset({"viewer"}), "tenant-a")
     with pytest.raises(AuthorizationError):
         require_roles("release-approver")(identity)
+
+
+def test_development_identity_is_disabled_in_production(monkeypatch) -> None:
+    monkeypatch.setenv("AUTH_MODE", "development")
+    monkeypatch.setenv("FACTORY_ENV", "production")
+    with pytest.raises(HTTPException) as error:
+        current_identity(None)
+    assert error.value.status_code == 503
 
 
 def test_feature_contract_rejects_drift_and_future_data() -> None:

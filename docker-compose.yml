@@ -41,10 +41,37 @@ services:
       context: .
       args: { SERVICE: factory }
     ports: ["8004:8000"]
+    environment:
+      FACTORY_DATABASE_URL: postgresql+psycopg://openmodelops:${FACTORY_DB_PASSWORD:-local-development-only}@factory-db:5432/openmodelops
+      AUTH_MODE: ${AUTH_MODE:-development}
+      FACTORY_ENV: ${FACTORY_ENV:-development}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-}
+      EVIDENCE_PUBLIC_KEYS_JSON: ${EVIDENCE_PUBLIC_KEYS_JSON:-{}}
+    depends_on:
+      factory-db:
+        condition: service_healthy
     restart: unless-stopped
     read_only: true
     tmpfs: ["/tmp"]
     security_opt: ["no-new-privileges:true"]
+
+  factory-db:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: openmodelops
+      POSTGRES_USER: openmodelops
+      POSTGRES_PASSWORD: ${FACTORY_DB_PASSWORD:-local-development-only}
+    volumes: ["factory-db-data:/var/lib/postgresql/data"]
+    configs:
+      - source: factory-schema
+        target: /docker-entrypoint-initdb.d/001_factory.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openmodelops -d openmodelops"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
 
   ollama:
     image: ollama/ollama:0.11.4
@@ -119,3 +146,8 @@ volumes:
   ollama-data:
   qdrant-data:
   redis-data:
+  factory-db-data:
+
+configs:
+  factory-schema:
+    file: ./infra/postgres/001_factory.sql

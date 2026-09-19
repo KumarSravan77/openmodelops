@@ -74,6 +74,9 @@ class GateResult:
     status: GateStatus
     evidence: str
     evaluator: str
+    evidence_digest: str = ""
+    signing_key_id: str = ""
+    signature: str = ""
     measured_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def __post_init__(self) -> None:
@@ -100,11 +103,14 @@ class FactoryWorkload:
     stage: WorkloadStage = WorkloadStage.DRAFT
     gates: dict[str, GateResult] = field(default_factory=dict)
     approved_by: str | None = None
+    policy_digest: str | None = None
     history: list[dict[str, str]] = field(default_factory=list)
 
     def record_gate(self, result: GateResult) -> None:
         if self.stage not in {WorkloadStage.DRAFT, WorkloadStage.VALIDATED}:
             raise ValueError("gates are immutable after approval")
+        if result.gate not in REQUIRED_GATES:
+            raise ValueError(f"unsupported release gate: {result.gate}")
         self.gates[result.gate] = result
         self.stage = WorkloadStage.VALIDATED
 
@@ -113,7 +119,7 @@ class FactoryWorkload:
             gate for gate in REQUIRED_GATES if gate not in self.gates or self.gates[gate].status != GateStatus.PASS
         )
 
-    def approve(self, actor: str) -> None:
+    def approve(self, actor: str, policy_digest: str = "") -> None:
         failures = self.missing_or_failed_gates()
         if self.stage != WorkloadStage.VALIDATED or failures:
             raise ValueError(f"release gates not satisfied: {failures}")
@@ -121,7 +127,11 @@ class FactoryWorkload:
         if actor == self.spec.owner or actor in evaluators:
             raise ValueError("owner or gate evaluator cannot approve the release")
         self.approved_by = actor
-        self._move(WorkloadStage.APPROVED, actor, "all required gates passed")
+        self.policy_digest = policy_digest or None
+        reason = "all required gates passed"
+        if policy_digest:
+            reason = f"{reason}; policy={policy_digest}"
+        self._move(WorkloadStage.APPROVED, actor, reason)
 
     def provision(self, actor: str) -> None:
         if self.stage != WorkloadStage.APPROVED:
