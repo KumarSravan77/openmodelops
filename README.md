@@ -1,6 +1,6 @@
 # OpenModelOps AI Platform
 
-OpenModelOps is an MIT-licensed, vendor-neutral production reference designed to grow across four operational domains:
+OpenModelOps is an MIT-licensed, vendor-neutral **AI SRE Factory** designed to operate four connected domains:
 
 - **MLOps** — versioned datasets, reproducible training, registry, approval, rollout, drift monitoring and retraining.
 - **LLMOps** — open-weight model catalog, evaluation, fine-tuning lineage, Ollama/vLLM serving and model routing.
@@ -52,6 +52,7 @@ Then open:
 - MLOps API: `http://localhost:8001/docs`
 - Agent API: `http://localhost:8002/docs`
 - AIOps API: `http://localhost:8003/docs`
+- Factory API: `http://localhost:8004/docs`
 - MLflow: `http://localhost:5000`
 - Grafana: `http://localhost:3000`
 - Prometheus: `http://localhost:9090`
@@ -87,6 +88,7 @@ The included Keycloak credentials are development defaults only. Set `KEYCLOAK_A
 | Vector retrieval | Implemented Qdrant adapter with mandatory tenant filtering | `platforms/retrieval/` |
 | Distributed training | Implemented immutable RayJob specification; requires KubeRay in Kubernetes | `platforms/training/` |
 | Open-weight inference | Ollama and vLLM adapters implemented | `platforms/agents/providers.py` |
+| AI workload factory and readiness scorecards | Implemented control-plane contract | `platforms/factory/` |
 
 “Integration-ready” is deliberately not presented as a deployed production service: real production identity, storage, GPUs, DNS, TLS, backups and cloud policies must be supplied by the target environment.
 
@@ -99,6 +101,7 @@ platforms/aiops/       incident workflow and controlled remediation API
 platforms/features/    feature contracts and validation
 platforms/retrieval/   tenant-isolated vector retrieval
 platforms/training/    reproducible Ray/Kubernetes training specs
+platforms/factory/     self-service workload API and release scorecards
 packages/contracts/    shared, versioned API contracts only
 packages/security/     OIDC verification and RBAC
 feature_store/         Feast-compatible repository configuration
@@ -110,3 +113,4 @@ docs/                  architecture, security, SLOs and runbooks
 ```
 
 See [production readiness](docs/PRODUCTION_READINESS.md) for the distinction between implemented controls and cloud deployment work that requires real infrastructure and credentials.
+See [AI SRE Factory](docs/AI_SRE_FACTORY.md) for the unified workload contract, release gates and delivery roadmap.
