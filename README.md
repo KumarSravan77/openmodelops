@@ -29,6 +29,8 @@ OpenModelOps is an MIT-licensed, vendor-neutral **AI SRE Factory** designed to o
 
 The current implementation also includes an approval-gated AIOps control plane, OIDC/JWT verification and RBAC primitives, feature contracts, tenant-isolated Qdrant retrieval, and reproducible RayJob generation for distributed CPU/GPU training.
 
+The observability and evaluation layer now adds privacy-safe OpenTelemetry/OpenInference-style spans, OTLP adapters for Langfuse and Phoenix, an Opik integration boundary, provisioned Prometheus/Grafana assets, MLflow registry synchronization, Ragas/DeepEval release gates, and bounded LangChain/LangGraph RAG workflows.
+
 ## Guarantees demonstrated
 
 - Explicit lifecycle state machines prevent unreviewed promotion.
@@ -71,7 +73,7 @@ Optional local infrastructure is isolated into Compose profiles:
 
 ```bash
 docker compose --profile identity --profile retrieval \
-  --profile feature-store --profile distributed-training up -d
+  --profile feature-store --profile distributed-training --profile telemetry up -d
 ```
 
 The included Keycloak credentials are development defaults only. Set `KEYCLOAK_ADMIN_PASSWORD` before shared use. Production requires TLS, external secrets, database-backed identity, workload identity and least-privilege network policies.
@@ -89,6 +91,12 @@ The included Keycloak credentials are development defaults only. Set `KEYCLOAK_A
 | Distributed training | Implemented immutable RayJob specification; requires KubeRay in Kubernetes | `platforms/training/` |
 | Open-weight inference | Ollama and vLLM adapters implemented | `platforms/agents/providers.py` |
 | AI workload factory and readiness scorecards | Implemented control-plane contract | `platforms/factory/` |
+| OpenTelemetry, Prometheus and Grafana | Implemented; collector is an optional local profile | `packages/observability/`, `observability/` |
+| Langfuse and Phoenix | Implemented via native OTLP export configuration | `packages/observability/` |
+| Opik | Implemented native SDK adapter; external deployment required | `packages/observability/` |
+| Ragas and DeepEval | Implemented optional runners and deterministic quality gate | `platforms/evaluation/` |
+| LangChain and LangGraph | Implemented optional Runnable and bounded corrective graph | `platforms/rag/` |
+| MLflow synchronization | Implemented registry, alias and governance-tag REST adapter | `platforms/integrations/mlflow.py` |
 
 “Integration-ready” is deliberately not presented as a deployed production service: real production identity, storage, GPUs, DNS, TLS, backups and cloud policies must be supplied by the target environment.
 
@@ -102,8 +110,11 @@ platforms/features/    feature contracts and validation
 platforms/retrieval/   tenant-isolated vector retrieval
 platforms/training/    reproducible Ray/Kubernetes training specs
 platforms/factory/     self-service workload API and release scorecards
+platforms/rag/         corrective RAG plus LangChain/LangGraph boundaries
+platforms/evaluation/  Ragas/DeepEval runners and fail-closed quality gates
 packages/contracts/    shared, versioned API contracts only
 packages/security/     OIDC verification and RBAC
+packages/observability privacy-safe OpenTelemetry and provider configuration
 feature_store/         Feast-compatible repository configuration
 infra/compose/         runnable local production-like stack
 infra/kubernetes/      probes, policies, autoscaling and disruption controls
@@ -117,3 +128,4 @@ See [AI SRE Factory](docs/AI_SRE_FACTORY.md) for the unified workload contract, 
 See the [product requirements](docs/PRODUCT_REQUIREMENTS.md) for personas, measurable requirements, acceptance criteria, safety invariants and delivery milestones.
 See [durable governance](docs/DURABLE_GOVERNANCE.md) for persistence, OIDC, signed evidence and release-policy configuration.
 See [integration contracts](docs/INTEGRATION_CONTRACTS.md) for ARIA, On-Call SRE, model-serving, agent-gateway and evaluation boundaries.
+See [observability and evaluation](docs/OBSERVABILITY_AND_EVALUATION.md) for framework support levels, privacy controls and release-gate behavior.

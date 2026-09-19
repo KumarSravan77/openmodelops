@@ -8,6 +8,10 @@ from typing import Protocol
 
 from packages.contracts import ModelEndpoint
 
+
+class TelemetryClient(Protocol):
+    def operation(self, operation: str, *, attributes: dict | None = None, parent_context=None): ...
+
 from .policy import GuardrailResult, GuardrailUnavailable, LocalGuardrail, ToolRegistry
 
 
@@ -48,6 +52,7 @@ class AgentRuntime:
     model_client: ModelClient
     guardrail: LocalGuardrail | None
     tools: ToolRegistry
+    telemetry: TelemetryClient | None = None
     traces: list[Trace] = field(default_factory=list)
 
     @staticmethod
@@ -63,6 +68,24 @@ class AgentRuntime:
 
     def invoke(self, release: AgentRelease, user_input: str) -> dict:
         trace_id = str(uuid.uuid4())
+        span_context = (
+            self.telemetry.operation(
+                "agent",
+                attributes={
+                    "agent.name": release.name,
+                    "agent.revision": release.revision,
+                    "model.name": release.model.name,
+                    "model.revision": release.model.revision,
+                    "input.digest": self._digest(user_input),
+                },
+            )
+            if self.telemetry
+            else _null_span()
+        )
+        with span_context:
+            return self._invoke_guarded(release, user_input, trace_id)
+
+    def _invoke_guarded(self, release: AgentRelease, user_input: str, trace_id: str) -> dict:
         started = time.monotonic()
         status = "error"
         reasons: tuple[str, ...] = ()
@@ -92,3 +115,11 @@ class AgentRuntime:
                     reasons=reasons,
                 )
             )
+
+
+class _null_span:
+    def __enter__(self):
+        return None
+
+    def __exit__(self, exc_type, exc, traceback):
+        return False

@@ -21,6 +21,9 @@ services:
       MODEL_PROVIDER: ${MODEL_PROVIDER:-ollama}
       MODEL_ID: ${MODEL_ID:-qwen2.5:3b}
       MODEL_BASE_URL: ${MODEL_BASE_URL:-http://ollama:11434}
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}
+      OPENMODELOPS_TELEMETRY_PROVIDER: ${OPENMODELOPS_TELEMETRY_PROVIDER:-otlp}
+      OPENMODELOPS_CAPTURE_AI_CONTENT: ${OPENMODELOPS_CAPTURE_AI_CONTENT:-false}
     restart: unless-stopped
     read_only: true
     tmpfs: ["/tmp"]
@@ -129,13 +132,25 @@ services:
       - prometheus-data:/prometheus
     restart: unless-stopped
 
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.133.0
+    profiles: ["telemetry"]
+    command: ["--config=/etc/otelcol-contrib/config.yaml"]
+    ports: ["4317:4317", "4318:4318"]
+    volumes:
+      - ./observability/otel-collector.yaml:/etc/otelcol-contrib/config.yaml:ro
+    restart: unless-stopped
+
   grafana:
     image: grafana/grafana:12.1.0
     ports: ["3000:3000"]
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-change-me-before-shared-use}
-    volumes: ["grafana-data:/var/lib/grafana"]
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
     restart: unless-stopped
 
 volumes:

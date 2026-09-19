@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from starlette.responses import Response
 
 from packages.contracts import ModelEndpoint
+from packages.observability import telemetry_from_environment
 
 from .feedback import Feedback, FeedbackStore
 from .policy import GuardrailUnavailable, LocalGuardrail, ToolRegistry
@@ -23,7 +24,7 @@ model_client = {
 }.get(provider)
 if model_client is None:
     raise RuntimeError("MODEL_PROVIDER must be echo, ollama or vllm")
-runtime = AgentRuntime(model_client, LocalGuardrail(), ToolRegistry())
+runtime = AgentRuntime(model_client, LocalGuardrail(), ToolRegistry(), telemetry_from_environment("openmodelops-agents"))
 feedback = FeedbackStore()
 requests_total = Counter("openmodelops_agent_requests_total", "Agent requests", ["status", "agent"])
 latency = Histogram("openmodelops_agent_request_duration_seconds", "Agent request latency", ["agent"])
