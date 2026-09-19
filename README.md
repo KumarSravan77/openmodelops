@@ -7,8 +7,6 @@ OpenModelOps is an MIT-licensed, vendor-neutral production reference designed to
 - **AgentOps** — bounded tools, isolated memory, fail-closed guardrails, feedback, evaluation and controlled agent releases.
 - **AIOps** — operational signals, anomaly correlation, incident assistance and approval-gated remediation.
 
-No employer-specific names, systems, credentials or internal documentation are included.
-
 ## Architecture
 
 ```text
