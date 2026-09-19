@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: helix
+  name: openmodelops
   labels:
     pod-security.kubernetes.io/enforce: restricted
 ---
@@ -9,7 +9,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: agent-api
-  namespace: helix
+  namespace: openmodelops
 spec:
   replicas: 2
   strategy:
@@ -24,7 +24,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: api
-          image: registry.example.test/helix-agent-api@sha256:REPLACE_WITH_APPROVED_DIGEST
+          image: registry.example.test/openmodelops-agent-api@sha256:REPLACE_WITH_APPROVED_DIGEST
           ports: [{ name: http, containerPort: 8000 }]
           resources:
             requests: { cpu: 200m, memory: 256Mi }
@@ -47,25 +47,25 @@ spec:
 ---
 apiVersion: v1
 kind: ServiceAccount
-metadata: { name: agent-api, namespace: helix }
+metadata: { name: agent-api, namespace: openmodelops }
 ---
 apiVersion: v1
 kind: Service
-metadata: { name: agent-api, namespace: helix }
+metadata: { name: agent-api, namespace: openmodelops }
 spec:
   selector: { app: agent-api }
   ports: [{ name: http, port: 80, targetPort: http }]
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
-metadata: { name: agent-api, namespace: helix }
+metadata: { name: agent-api, namespace: openmodelops }
 spec:
   minAvailable: 1
   selector: { matchLabels: { app: agent-api } }
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
-metadata: { name: agent-api, namespace: helix }
+metadata: { name: agent-api, namespace: openmodelops }
 spec:
   scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: agent-api }
   minReplicas: 2
@@ -81,7 +81,7 @@ spec:
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
-metadata: { name: agent-api-default-deny, namespace: helix }
+metadata: { name: agent-api-default-deny, namespace: openmodelops }
 spec:
   podSelector: { matchLabels: { app: agent-api } }
   policyTypes: [Ingress, Egress]

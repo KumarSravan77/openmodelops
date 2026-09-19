@@ -1,9 +1,11 @@
-# Helix AI Platform
+# OpenModelOps AI Platform
 
-Helix is a clean-room, vendor-neutral production reference composed of two independently deployable platforms:
+OpenModelOps is an MIT-licensed, vendor-neutral production reference designed to grow across four operational domains:
 
-- **Helix MLOps** — versioned datasets, reproducible training, evaluation gates, model registry, approval, rollout, drift monitoring and retraining.
-- **Helix Agents** — model routing, bounded tools, isolated memory, fail-closed guardrails, trace/feedback capture, evaluation and controlled prompt/agent releases.
+- **MLOps** — versioned datasets, reproducible training, registry, approval, rollout, drift monitoring and retraining.
+- **LLMOps** — open-weight model catalog, evaluation, fine-tuning lineage, Ollama/vLLM serving and model routing.
+- **AgentOps** — bounded tools, isolated memory, fail-closed guardrails, feedback, evaluation and controlled agent releases.
+- **AIOps** — operational signals, anomaly correlation, incident assistance and approval-gated remediation.
 
 No employer-specific names, systems, credentials or internal documentation are included.
 
@@ -52,6 +54,16 @@ Then open:
 - MLflow: `http://localhost:5000`
 - Grafana: `http://localhost:3000`
 - Prometheus: `http://localhost:9090`
+
+To start an open-weight model locally:
+
+```bash
+docker compose --profile local-models up -d ollama
+docker compose exec ollama ollama pull qwen2.5:3b
+docker compose up --build agent-api
+```
+
+For an NVIDIA GPU environment, set `MODEL_PROVIDER=vllm`, point `MODEL_BASE_URL` at an approved vLLM server, and set `MODEL_ID` to its served model name. Both paths use the same governed `ModelEndpoint` contract.
 
 ## Repository map
 

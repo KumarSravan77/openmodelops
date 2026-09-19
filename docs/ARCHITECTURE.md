@@ -4,6 +4,26 @@
 
 The MLOps platform and agent platform are separate security and failure domains. The only mandatory dependency is the immutable `ModelEndpoint`/`ModelRelease` contract. Agent services cannot register or promote models, and training workloads cannot modify prompts, tools or agent policy.
 
+## Extensible operations domains
+
+```text
+OpenModelOps
+├── MLOps    data, features, training, registry, deployment and drift
+├── LLMOps   open-weight models, fine-tuning, evaluation and serving
+├── AgentOps prompts, tools, memory, guardrails, traces and feedback
+└── AIOps    events, anomalies, incidents and approval-gated remediation
+```
+
+Each domain owns its APIs and state. Shared packages contain versioned contracts, not provider-specific business logic.
+
+## Open-weight model path
+
+- Ollama is the local-development path and works well on laptops and small servers.
+- vLLM is the production GPU-serving path and exposes an OpenAI-compatible endpoint.
+- Model IDs, upstream licenses, checksums, quantization, evaluation results and serving configuration belong in the model registry.
+- A model cannot enter an agent release until the MLOps/LLMOps lifecycle marks its immutable revision approved.
+- Model license terms are reviewed independently of this repository's MIT license. MIT covers OpenModelOps code, not downloaded model weights.
+
 ## MLOps lifecycle
 
 ```text

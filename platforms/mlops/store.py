@@ -7,7 +7,7 @@ from .domain import ModelRun, RunState
 
 
 class RunStore:
-    def __init__(self, path: str = "helix-mlops.db") -> None:
+    def __init__(self, path: str = "openmodelops-mlops.db") -> None:
         self.path = path
         self._init()
 

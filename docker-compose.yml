@@ -17,10 +17,21 @@ services:
       context: .
       args: { SERVICE: agents }
     ports: ["8002:8000"]
+    environment:
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-ollama}
+      MODEL_ID: ${MODEL_ID:-qwen2.5:3b}
+      MODEL_BASE_URL: ${MODEL_BASE_URL:-http://ollama:11434}
     restart: unless-stopped
     read_only: true
     tmpfs: ["/tmp"]
     security_opt: ["no-new-privileges:true"]
+
+  ollama:
+    image: ollama/ollama:0.11.4
+    profiles: ["local-models"]
+    ports: ["11434:11434"]
+    volumes: ["ollama-data:/root/.ollama"]
+    restart: unless-stopped
 
   mlflow:
     image: ghcr.io/mlflow/mlflow:v3.1.4
@@ -52,3 +63,4 @@ volumes:
   mlflow-data:
   prometheus-data:
   grafana-data:
+  ollama-data:

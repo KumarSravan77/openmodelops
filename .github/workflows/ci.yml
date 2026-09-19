@@ -42,4 +42,4 @@ jobs:
           context: .
           push: false
           build-args: SERVICE=${{ matrix.service }}
-          tags: helix-${{ matrix.service }}:${{ github.sha }}
+          tags: openmodelops-${{ matrix.service }}:${{ github.sha }}

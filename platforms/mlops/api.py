@@ -11,9 +11,9 @@ from pydantic import BaseModel, Field
 from .domain import EvaluationPolicy, ModelRun, RunState
 from .store import RunStore
 
-app = FastAPI(title="Helix MLOps Control Plane", version="0.1.0")
-store = RunStore(os.environ.get("MLOPS_DB_PATH", "helix-mlops.db"))
-transitions = Counter("helix_mlops_transitions_total", "Model lifecycle transitions", ["target"])
+app = FastAPI(title="OpenModelOps MLOps Control Plane", version="0.1.0")
+store = RunStore(os.environ.get("MLOPS_DB_PATH", "openmodelops-mlops.db"))
+transitions = Counter("openmodelops_mlops_transitions_total", "Model lifecycle transitions", ["target"])
 
 
 class CreateRun(BaseModel):

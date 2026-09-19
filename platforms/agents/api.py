@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI, HTTPException
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from pydantic import BaseModel, Field
@@ -9,19 +11,32 @@ from packages.contracts import ModelEndpoint
 
 from .feedback import Feedback, FeedbackStore
 from .policy import GuardrailUnavailable, LocalGuardrail, ToolRegistry
+from .providers import OllamaModel, OpenAICompatibleModel, UrllibTransport
 from .runtime import AgentRelease, AgentRuntime, EchoModel
 
-app = FastAPI(title="Helix Agent Platform", version="0.1.0")
-runtime = AgentRuntime(EchoModel(), LocalGuardrail(), ToolRegistry())
+app = FastAPI(title="OpenModelOps Agent Platform", version="0.1.0")
+provider = os.environ.get("MODEL_PROVIDER", "echo")
+model_client = {
+    "echo": EchoModel(),
+    "ollama": OllamaModel(UrllibTransport()),
+    "vllm": OpenAICompatibleModel(UrllibTransport(), os.environ.get("MODEL_API_KEY", "")),
+}.get(provider)
+if model_client is None:
+    raise RuntimeError("MODEL_PROVIDER must be echo, ollama or vllm")
+runtime = AgentRuntime(model_client, LocalGuardrail(), ToolRegistry())
 feedback = FeedbackStore()
-requests_total = Counter("helix_agent_requests_total", "Agent requests", ["status", "agent"])
-latency = Histogram("helix_agent_request_duration_seconds", "Agent request latency", ["agent"])
+requests_total = Counter("openmodelops_agent_requests_total", "Agent requests", ["status", "agent"])
+latency = Histogram("openmodelops_agent_request_duration_seconds", "Agent request latency", ["agent"])
 
 release = AgentRelease(
     name="operations-assistant",
     revision="prompt-v1",
     prompt="Answer from authorized context. Never invent actions, credentials or incident facts.",
-    model=ModelEndpoint("local-model", "model-v1", "http://model-gateway:8080"),
+    model=ModelEndpoint(
+        "open-weight-model",
+        os.environ.get("MODEL_ID", "qwen2.5:3b"),
+        os.environ.get("MODEL_BASE_URL", "http://ollama:11434"),
+    ),
 )
 
 
