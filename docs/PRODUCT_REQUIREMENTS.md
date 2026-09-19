@@ -45,8 +45,8 @@ OpenModelOps provides one self-service factory contract and integrates specializ
 | FR-07 | Durable control-plane state | Workload, gate and audit state survives process and node failure | Implemented PostgreSQL-compatible store; HA validation pending |
 | FR-08 | Federated identity | Human and workload actors derive from OIDC/workload identity, never request bodies | Implemented OIDC enforcement; provider integration pending |
 | FR-09 | Reconciliation | Factory controller reconciles approved specifications into Kubernetes resources | Planned |
-| FR-10 | Evaluation integration | Evaluation engine signs results consumed by quality gates | Planned |
-| FR-11 | Incident integration | ARIA evidence enters On-Call authority through signed, replay-resistant events | Existing externally; adapter planned |
+| FR-10 | Evaluation integration | Evaluation engine signs results consumed by quality gates | Report adapter implemented; external signer deployment pending |
+| FR-11 | Incident integration | ARIA evidence enters On-Call authority through signed, replay-resistant events | Typed adapters and existing signed ARIA→On-Call contract implemented; deployment pending |
 | FR-12 | Automated rollback | Failed canary/SLO verification executes an approved deterministic rollback | Planned |
 
 ## 5. Non-functional requirements
