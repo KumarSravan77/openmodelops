@@ -14,7 +14,17 @@ def current_identity(authorization: str | None = Header(default=None)) -> Identi
             raise HTTPException(status_code=503, detail="development authentication is disabled in production")
         return Identity(
             subject=os.getenv("DEV_ACTOR", "local-developer"),
-            roles=frozenset({"factory-admin", "gate-evaluator", "release-approver"}),
+            roles=frozenset(
+                {
+                    "factory-admin",
+                    "gate-evaluator",
+                    "release-approver",
+                    "sre-reader",
+                    "sre-proposer",
+                    "sre-approver",
+                    "sre-executor",
+                }
+            ),
             tenant=os.getenv("DEV_TENANT", "local"),
         )
     if mode != "oidc":

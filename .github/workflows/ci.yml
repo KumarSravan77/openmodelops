@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [mlops, agents, aiops, factory, reviewer]
+        service: [mlops, agents, aiops, factory, reviewer, kubernetes_sre]
     steps:
       - uses: actions/checkout@v5
       - uses: docker/setup-buildx-action@v3
@@ -41,7 +41,9 @@ jobs:
         with:
           context: .
           push: false
-          build-args: SERVICE=${{ matrix.service }}
+          build-args: |
+            SERVICE=${{ matrix.service }}
+            EXTRAS=${{ matrix.service == 'kubernetes_sre' && 'kubernetes-sre' || '' }}
           tags: openmodelops-${{ matrix.service }}:${{ github.sha }}
 
   optional-frameworks:
@@ -56,6 +58,8 @@ jobs:
             expression: evaluation_frameworks
           - extra: observability
             expression: observability_frameworks
+          - extra: kubernetes-sre
+            expression: kubernetes_sre_framework
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6

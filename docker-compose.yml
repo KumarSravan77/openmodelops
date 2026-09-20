@@ -39,6 +39,26 @@ services:
     tmpfs: ["/tmp"]
     security_opt: ["no-new-privileges:true"]
 
+  kubernetes-sre-api:
+    profiles: ["kubernetes-sre"]
+    build:
+      context: .
+      args: { SERVICE: kubernetes_sre, EXTRAS: kubernetes-sre }
+    ports: ["8006:8000"]
+    environment:
+      KUBERNETES_SRE_DB: /data/kubernetes-sre.db
+      KUBERNETES_SRE_CLUSTER: ${KUBERNETES_SRE_CLUSTER:-local}
+      KUBERNETES_SRE_MANAGED_NAMESPACES: ${KUBERNETES_SRE_MANAGED_NAMESPACES:-openmodelops-managed}
+      KUBERNETES_SRE_EXECUTION_ENABLED: ${KUBERNETES_SRE_EXECUTION_ENABLED:-false}
+      AUTH_MODE: ${AUTH_MODE:-development}
+    volumes:
+      - kubernetes-sre-data:/data
+      - ${KUBECONFIG:-/dev/null}:/home/openmodelops/.kube/config:ro
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+
   reviewer-api:
     build:
       context: .
@@ -180,6 +200,7 @@ volumes:
   redis-data:
   factory-db-data:
   reviewer-data:
+  kubernetes-sre-data:
 
 configs:
   factory-schema:

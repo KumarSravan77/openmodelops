@@ -26,7 +26,7 @@ class TelemetryProvider(str, Enum):
 
 
 SENSITIVE_KEY = re.compile(r"prompt|input|output|document|context|secret|password|authorization|(?:^|[._])token(?:$|[._])", re.IGNORECASE)
-ALLOWED_OPERATIONS = frozenset({"agent", "embedding", "factory", "llm", "policy", "rerank", "retrieval", "tool"})
+ALLOWED_OPERATIONS = frozenset({"agent", "embedding", "factory", "llm", "policy", "rerank", "retrieval", "sre", "tool"})
 
 
 @dataclass(frozen=True)

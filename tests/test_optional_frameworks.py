@@ -1,6 +1,11 @@
 import pytest
 
 
+def test_kubernetes_sre_framework():
+    kubernetes = pytest.importorskip("kubernetes")
+    assert kubernetes is not None
+
+
 def test_rag_frameworks_import_and_langchain_pipeline_runs():
     pytest.importorskip("langgraph")
     pytest.importorskip("langchain_core")

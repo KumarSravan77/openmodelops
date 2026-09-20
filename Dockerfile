@@ -1,10 +1,11 @@
 FROM python:3.12-slim AS runtime
 ARG SERVICE
+ARG EXTRAS=""
 ENV SERVICE=${SERVICE} PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 RUN useradd --create-home --uid 10001 openmodelops
 COPY pyproject.toml .
-RUN pip install --no-cache-dir .
+RUN if [ -n "$EXTRAS" ]; then pip install --no-cache-dir ".[${EXTRAS}]"; else pip install --no-cache-dir .; fi
 COPY packages packages
 COPY platforms platforms
 COPY catalog catalog

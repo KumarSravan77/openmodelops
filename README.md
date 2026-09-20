@@ -28,7 +28,7 @@ OpenModelOps is an MIT-licensed, vendor-neutral **AI SRE Factory** designed to o
                     Prometheus / Grafana / logs
 ```
 
-The current implementation also includes an approval-gated AIOps control plane, OIDC/JWT verification and RBAC primitives, feature contracts, tenant-isolated Qdrant retrieval, and reproducible RayJob generation for distributed CPU/GPU training.
+The current implementation also includes an approval-gated AIOps control plane, a read-only Kubernetes SRE diagnostic runtime, OIDC/JWT verification and RBAC primitives, feature contracts, tenant-isolated Qdrant retrieval, and reproducible RayJob generation for distributed CPU/GPU training.
 
 The observability and evaluation layer now adds privacy-safe OpenTelemetry/OpenInference-style spans, OTLP adapters for Langfuse and Phoenix, an Opik integration boundary, provisioned Prometheus/Grafana assets, MLflow registry synchronization, Ragas/DeepEval release gates, and bounded LangChain/LangGraph RAG workflows.
 
@@ -57,6 +57,7 @@ Then open:
 - AIOps API: `http://localhost:8003/docs`
 - Factory API: `http://localhost:8004/docs`
 - Review Agent API: `http://localhost:8005/docs`
+- Kubernetes SRE API: `http://localhost:8006/docs` (profile: `kubernetes-sre`)
 - MLflow: `http://localhost:5000`
 - Grafana: `http://localhost:3000`
 - Prometheus: `http://localhost:9090`
@@ -100,6 +101,8 @@ The included Keycloak credentials are development defaults only. Set `KEYCLOAK_A
 | LangChain and LangGraph | Implemented optional Runnable and bounded corrective graph | `platforms/rag/` |
 | MLflow synchronization | Implemented registry, alias and governance-tag REST adapter | `platforms/integrations/mlflow.py` |
 | Safety-gated PR review agent | Implemented review/comment retrieval, fork latch, security opt-in and approval gate | `platforms/reviewer/` |
+| Kubernetes SRE diagnostics | Implemented official-client collection, deterministic parallel analysis, persistence and scheduled inspection | `platforms/kubernetes_sre/` |
+| Kubernetes remediation | Implemented narrow scale/restart executor with immutable approval digest and three-party separation; deployment remains disabled until production identity and shared durable storage are configured | `platforms/kubernetes_sre/actions.py`, `infra/kubernetes/kubernetes-sre-executor-rbac.yaml` |
 
 “Integration-ready” is deliberately not presented as a deployed production service: real production identity, storage, GPUs, DNS, TLS, backups and cloud policies must be supplied by the target environment.
 
@@ -114,6 +117,7 @@ platforms/retrieval/   tenant-isolated vector retrieval
 platforms/training/    reproducible Ray/Kubernetes training specs
 platforms/factory/     self-service workload API and release scorecards
 platforms/reviewer/    GitHub/GHES review aggregation and approval gate
+platforms/kubernetes_sre/ Kubernetes inspection, specialist analysis and safety-gated changes
 platforms/rag/         corrective RAG plus LangChain/LangGraph boundaries
 platforms/evaluation/  Ragas/DeepEval runners and fail-closed quality gates
 packages/contracts/    shared, versioned API contracts only
@@ -134,3 +138,4 @@ See [durable governance](docs/DURABLE_GOVERNANCE.md) for persistence, OIDC, sign
 See [integration contracts](docs/INTEGRATION_CONTRACTS.md) for ARIA, On-Call SRE, model-serving, agent-gateway and evaluation boundaries.
 See [observability and evaluation](docs/OBSERVABILITY_AND_EVALUATION.md) for framework support levels, privacy controls and release-gate behavior.
 See [review agent](docs/REVIEW_AGENT.md) for PR review retrieval, fork latching, security checks and human approval rules.
+See [Kubernetes SRE agent](docs/KUBERNETES_SRE_AGENT.md) for runtime boundaries, deployment and safety invariants.

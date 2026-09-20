@@ -42,7 +42,7 @@ Production approval requires passing evidence for security, quality, reliability
 5. Release through a deployment controller.
 6. Suspend on an SLO or security breach and retain the audit history.
 
-The current in-memory API demonstrates the domain contract. The production adapter will persist state in PostgreSQL, derive actors from OIDC rather than request bodies, verify evidence signatures, reconcile Kubernetes resources and publish OpenTelemetry spans.
+The factory API persists governance state in PostgreSQL and derives production actors from OIDC. The Kubernetes SRE runtime adds read-only scheduled inspection and a separate, disabled-by-default remediation boundary. Production rollout still requires environment-specific identity, secrets, networking, backup and telemetry configuration.
 
 ## Factory roadmap
 
@@ -52,7 +52,7 @@ The current in-memory API demonstrates the domain contract. The production adapt
 | MLOps lifecycle | Implemented core | MLflow registration and workflow executor |
 | Open-weight LLM serving | Ollama/vLLM adapters | GPU autoscaling and routing |
 | Agent safety | Guardrails and controlled tools | Durable traces and sandboxed executors |
-| AIOps | Approval workflow | Allow-listed Kubernetes runbooks |
+| AIOps | Approval workflow plus allow-listed Kubernetes scale/restart actions | Verification runbooks and incident integrations |
 | AI SRE | SLO model and probes | OTel collector, alerts and burn-rate policies |
-| Local infrastructure | Compose profiles | Kubernetes operators and GitOps |
+| Local infrastructure | Compose profiles and read-only Kubernetes SRE deployment | Kubernetes operators and GitOps |
 | Cloud | Portable contracts | AWS Terraform and GitHub OIDC |

@@ -1,0 +1,33 @@
+# Intentionally not bound to the reader Deployment. Bind this Role only to a
+# separately deployed executor after configuring OIDC, a shared durable store,
+# audit export and an explicit list of managed namespaces.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: openmodelops-sre-executor
+  namespace: openmodelops-managed
+automountServiceAccountToken: true
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: openmodelops-sre-executor
+  namespace: openmodelops-managed
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale"]
+    verbs: ["get", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: openmodelops-sre-executor
+  namespace: openmodelops-managed
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: openmodelops-sre-executor
+subjects:
+  - kind: ServiceAccount
+    name: openmodelops-sre-executor
+    namespace: openmodelops-managed
