@@ -12,3 +12,5 @@ scrape_configs:
     static_configs: [{ targets: ["banking-api:8000"] }]
   - job_name: openmodelops-judgeops
     static_configs: [{ targets: ["judgeops-api:8000"] }]
+  - job_name: openmodelops-streaming-reliability
+    static_configs: [{ targets: ["streaming-api:8000"] }]

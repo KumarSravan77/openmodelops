@@ -1,5 +1,5 @@
 PYTHON ?= python3
-.PHONY: test lint go-test go-build run-mlops run-agents run-factory run-metal run-judgeops run-ecommerce validate local-up local-up-ai local-up-full local-down local-smoke banking-up banking-smoke banking-load banking-down kind-create kind-deploy kind-delete kind-smoke
+.PHONY: test lint go-test go-build run-mlops run-agents run-factory run-metal run-judgeops run-ecommerce run-streaming validate local-up local-up-ai local-up-full local-down local-smoke banking-up banking-smoke banking-load banking-down streaming-up streaming-down kind-create kind-deploy kind-delete kind-smoke
 
 test:
 	$(PYTHON) -m pytest -q
@@ -31,6 +31,15 @@ run-judgeops:
 
 run-ecommerce:
 	$(PYTHON) -m uvicorn platforms.ecommerce.api:app --host 127.0.0.1 --port 8010
+
+run-streaming:
+	$(PYTHON) -m uvicorn platforms.streaming.api:app --host 127.0.0.1 --port 8011
+
+streaming-up:
+	docker compose --profile streaming up -d --build redpanda streaming-api
+
+streaming-down:
+	docker compose --profile streaming down
 
 validate: lint test go-test
 

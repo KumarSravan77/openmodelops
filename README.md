@@ -103,6 +103,18 @@ FastAPI chat UI, golden evaluation cases and privacy-safe telemetry. It uses no
 commerce-site scraping or customer data. See
 [`examples/ecommerce-assistant/README.md`](examples/ecommerce-assistant/README.md).
 
+Run the Kafka-compatible streaming reliability lab:
+
+```bash
+docker compose --profile streaming up -d --build redpanda streaming-api
+curl -X POST http://localhost:8011/v1/scenarios/broker-failure
+```
+
+It covers consumer lag, hot partitions, rebalance storms, broker and replica
+failure, schema incompatibility, duplicate processing, poison messages,
+SLO/error-budget decisions, and human-reviewed incident communications. See
+[`examples/streaming-reliability/README.md`](examples/streaming-reliability/README.md).
+
 Run the native Apple Silicon inference control plane in dependency-free
 development mode:
 
@@ -194,6 +206,7 @@ The included Keycloak credentials are development defaults only. Set `KEYCLOAK_A
 | Go platform CLI | Implemented shared-platform diagnostics and Kind/workload operations | `go/cmd/omo/` |
 | Synthetic banking performance workload | Implemented deterministic Canadian transaction generation, fraud scoring, k6 traffic profiles, SLO gates and dashboard | `platforms/banking/`, `performance/banking/` |
 | E-commerce LLMOps reference workload | Implemented synthetic catalog, hybrid/MMR retrieval, corrective flow, citations, governed MCP-style tools, chat UI, tests and Kubernetes manifest | `platforms/ecommerce/`, `examples/ecommerce-assistant/` |
+| Kafka-compatible streaming reliability | Implemented eight-scenario qualification lab, SLO/error-budget analysis, Prometheus metrics, ARIA evidence handoff and human-reviewed CRCA workflow; local broker is single-node Redpanda, not production HA | `platforms/streaming/`, `examples/streaming-reliability/` |
 | Apple Silicon inference control plane | Implemented hardware profiling, memory admission, two-slot scheduling, prompt-cache indexing, MLX adapter, OpenAI-compatible API and metrics | `platforms/metal_runtime/` |
 
 “Integration-ready” is deliberately not presented as a deployed production service: real production identity, storage, GPUs, DNS, TLS, backups and cloud policies must be supplied by the target environment.

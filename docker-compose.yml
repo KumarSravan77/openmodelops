@@ -168,6 +168,47 @@ services:
       resources:
         limits: {cpus: "1.0", memory: 512M}
 
+  streaming-api:
+    profiles: ["streaming"]
+    build:
+      context: .
+      args: { SERVICE: streaming, PIP_INDEX_URL: "${PIP_INDEX_URL:-https://pypi.org/simple}", PIP_TRUSTED_HOST: "${PIP_TRUSTED_HOST:-}" }
+    ports: ["8011:8000"]
+    environment:
+      STREAMING_SCENARIOS: examples/streaming-reliability/scenarios.json
+    depends_on:
+      redpanda: {condition: service_healthy}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    deploy:
+      resources:
+        limits: {cpus: "0.5", memory: 256M}
+
+  redpanda:
+    image: redpandadata/redpanda:v24.3.5
+    profiles: ["streaming"]
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp=1
+      - --memory=768M
+      - --reserve-memory=0M
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr=internal://redpanda:9092,external://localhost:19092
+    ports: ["19092:19092", "19644:9644"]
+    volumes: ["redpanda-data:/var/lib/redpanda/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q 'Healthy:.*true'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
   banking-load:
     image: grafana/k6:0.57.0
     profiles: ["load-test"]
@@ -279,6 +320,7 @@ volumes:
   kubernetes-sre-data:
   judgeops-data:
   phoenix-data:
+  redpanda-data:
 
 configs:
   factory-schema:

@@ -80,7 +80,7 @@ def capabilities() -> dict[str, list[str]]:
         "mlops": ["training", "evaluation", "registry", "release-gates", "feature-contracts"],
         "llmops": ["open-weight-catalog", "ollama", "vllm", "evaluation", "routing"],
         "agentops": ["guardrails", "bounded-tools", "tracing", "feedback", "release-governance"],
-        "ai_sre": ["slos", "scorecards", "observability", "incident-workflow", "verified-remediation"],
+        "ai_sre": ["slos", "scorecards", "observability", "incident-workflow", "verified-remediation", "streaming-reliability"],
     }
 
 
