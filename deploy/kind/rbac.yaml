@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: sre-reader, namespace: openmodelops}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata: {name: sre-executor, namespace: openmodelops}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: sre-reader, namespace: openmodelops-managed}
+rules:
+  - apiGroups: [""]
+    resources: [pods, events, services]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments, replicasets]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: {name: sre-executor, namespace: openmodelops-managed}
+rules:
+  - apiGroups: [apps]
+    resources: [deployments, deployments/scale]
+    verbs: [get, list, watch, patch, update]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: sre-reader, namespace: openmodelops-managed}
+subjects: [{kind: ServiceAccount, name: sre-reader, namespace: openmodelops}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: sre-reader}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata: {name: sre-executor, namespace: openmodelops-managed}
+subjects: [{kind: ServiceAccount, name: sre-executor, namespace: openmodelops}]
+roleRef: {apiGroup: rbac.authorization.k8s.io, kind: Role, name: sre-executor}

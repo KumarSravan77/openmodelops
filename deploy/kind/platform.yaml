@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: factory-api, namespace: openmodelops}
+spec:
+  selector: {matchLabels: {app: factory-api}}
+  template:
+    metadata: {labels: {app: factory-api}}
+    spec:
+      containers:
+        - name: api
+          image: openmodelops-factory:local
+          imagePullPolicy: Never
+          env:
+            - name: FACTORY_DATABASE_URL
+              valueFrom: {secretKeyRef: {name: platform-secrets, key: factory-database-url}}
+            - {name: AUTH_MODE, value: development}
+            - name: ARIA_INTEGRATION_SECRET
+              valueFrom: {secretKeyRef: {name: platform-secrets, key: aria-integration-secret}}
+          ports: [{containerPort: 8000}]
+          readinessProbe: {httpGet: {path: /health/ready, port: 8000}, initialDelaySeconds: 5}
+          livenessProbe: {httpGet: {path: /health/live, port: 8000}, initialDelaySeconds: 15}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+---
+apiVersion: v1
+kind: Service
+metadata: {name: factory-api, namespace: openmodelops}
+spec:
+  type: NodePort
+  selector: {app: factory-api}
+  ports: [{port: 8000, targetPort: 8000, nodePort: 30084}]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: kubernetes-sre-api, namespace: openmodelops}
+spec:
+  selector: {matchLabels: {app: kubernetes-sre-api}}
+  template:
+    metadata: {labels: {app: kubernetes-sre-api}}
+    spec:
+      serviceAccountName: sre-reader
+      containers:
+        - name: api
+          image: openmodelops-kubernetes-sre:local
+          imagePullPolicy: Never
+          env:
+            - {name: KUBERNETES_SRE_CLUSTER, value: kind-openmodelops}
+            - {name: KUBERNETES_SRE_MANAGED_NAMESPACES, value: openmodelops-managed}
+            - {name: KUBERNETES_SRE_EXECUTION_ENABLED, value: "false"}
+            - {name: AUTH_MODE, value: development}
+            - {name: KUBERNETES_SRE_DB, value: /data/kubernetes-sre.db}
+          ports: [{containerPort: 8000}]
+          readinessProbe: {httpGet: {path: /health/ready, port: 8000}, initialDelaySeconds: 5}
+          livenessProbe: {httpGet: {path: /health/live, port: 8000}, initialDelaySeconds: 15}
+          resources:
+            requests: {cpu: 100m, memory: 128Mi}
+            limits: {cpu: "1", memory: 512Mi}
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          volumeMounts: [{name: data, mountPath: /data}]
+      volumes: [{name: data, emptyDir: {}}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: kubernetes-sre-api, namespace: openmodelops}
+spec:
+  type: NodePort
+  selector: {app: kubernetes-sre-api}
+  ports: [{port: 8000, targetPort: 8000, nodePort: 30086}]

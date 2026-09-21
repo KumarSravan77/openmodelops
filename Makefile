@@ -1,10 +1,11 @@
-.PHONY: test lint run-mlops run-agents run-factory validate
+PYTHON ?= python3
+.PHONY: test lint run-mlops run-agents run-factory validate local-up local-up-ai local-up-full local-down local-smoke kind-create kind-deploy kind-delete kind-smoke
 
 test:
-	python -m pytest -q
+	$(PYTHON) -m pytest -q
 
 lint:
-	python -m ruff check .
+	$(PYTHON) -m ruff check .
 
 run-mlops:
 	uvicorn platforms.mlops.api:app --host 0.0.0.0 --port 8001
@@ -16,3 +17,30 @@ run-factory:
 	uvicorn platforms.factory.api:app --host 0.0.0.0 --port 8004
 
 validate: lint test
+
+local-up:
+	./scripts/local-stack.sh up core
+
+local-up-ai:
+	./scripts/local-stack.sh up ai
+
+local-up-full:
+	./scripts/local-stack.sh up full
+
+local-down:
+	./scripts/local-stack.sh down
+
+local-smoke:
+	./scripts/local-smoke-test.sh
+
+kind-create:
+	kind create cluster --name openmodelops --config deploy/kind/cluster.yaml
+
+kind-deploy:
+	./scripts/kind-deploy.sh
+
+kind-delete:
+	kind delete cluster --name openmodelops
+
+kind-smoke:
+	./scripts/kind-smoke-test.sh

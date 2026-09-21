@@ -1,0 +1,23 @@
+services:
+  factory-api:
+    environment:
+      ARIA_BASE_URL: http://aria-api:8080
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+    networks:
+      default:
+      shared-local:
+        aliases: [factory-api]
+  agent-api:
+    environment:
+      MODEL_BASE_URL: http://ollama:11434
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+    networks: [default, shared-local]
+  kubernetes-sre-api:
+    networks: [default, shared-local]
+  otel-collector:
+    networks: [default, shared-local]
+
+networks:
+  shared-local:
+    external: true
+    name: openmodelops-local

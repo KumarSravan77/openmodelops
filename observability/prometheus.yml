@@ -6,3 +6,5 @@ scrape_configs:
     static_configs: [{ targets: ["mlops-api:8000"] }]
   - job_name: openmodelops-agents
     static_configs: [{ targets: ["agent-api:8000"] }]
+  - job_name: openmodelops-kubernetes-sre
+    static_configs: [{ targets: ["kubernetes-sre-api:8000"] }]

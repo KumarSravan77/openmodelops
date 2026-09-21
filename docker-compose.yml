@@ -2,7 +2,7 @@ services:
   mlops-api:
     build:
       context: .
-      args: { SERVICE: mlops }
+      args: { SERVICE: mlops, PIP_INDEX_URL: "${PIP_INDEX_URL:-https://pypi.org/simple}", PIP_TRUSTED_HOST: "${PIP_TRUSTED_HOST:-}" }
     ports: ["8001:8000"]
     environment:
       MLOPS_DB_PATH: /data/mlops.db
@@ -15,7 +15,7 @@ services:
   agent-api:
     build:
       context: .
-      args: { SERVICE: agents }
+      args: { SERVICE: agents, PIP_INDEX_URL: "${PIP_INDEX_URL:-https://pypi.org/simple}", PIP_TRUSTED_HOST: "${PIP_TRUSTED_HOST:-}" }
     ports: ["8002:8000"]
     environment:
       MODEL_PROVIDER: ${MODEL_PROVIDER:-ollama}
@@ -32,7 +32,7 @@ services:
   aiops-api:
     build:
       context: .
-      args: { SERVICE: aiops }
+      args: { SERVICE: aiops, PIP_INDEX_URL: "${PIP_INDEX_URL:-https://pypi.org/simple}", PIP_TRUSTED_HOST: "${PIP_TRUSTED_HOST:-}" }
     ports: ["8003:8000"]
     restart: unless-stopped
     read_only: true
@@ -43,7 +43,7 @@ services:
     profiles: ["kubernetes-sre"]
     build:
       context: .
-      args: { SERVICE: kubernetes_sre, EXTRAS: kubernetes-sre }
+      args: { SERVICE: kubernetes_sre, EXTRAS: kubernetes-sre, PIP_INDEX_URL: "${PIP_INDEX_URL:-https://pypi.org/simple}", PIP_TRUSTED_HOST: "${PIP_TRUSTED_HOST:-}" }
     ports: ["8006:8000"]
     environment:
       KUBERNETES_SRE_DB: /data/kubernetes-sre.db
@@ -62,7 +62,7 @@ services:
   reviewer-api:
     build:
       context: .
-      args: { SERVICE: reviewer }
+      args: { SERVICE: reviewer, PIP_INDEX_URL: "${PIP_INDEX_URL:-https://pypi.org/simple}", PIP_TRUSTED_HOST: "${PIP_TRUSTED_HOST:-}" }
     ports: ["8005:8000"]
     environment:
       REVIEW_AGENT_CONFIG: .beacode/beacode-config.yaml
@@ -79,7 +79,7 @@ services:
   factory-api:
     build:
       context: .
-      args: { SERVICE: factory }
+      args: { SERVICE: factory, PIP_INDEX_URL: "${PIP_INDEX_URL:-https://pypi.org/simple}", PIP_TRUSTED_HOST: "${PIP_TRUSTED_HOST:-}" }
     ports: ["8004:8000"]
     environment:
       FACTORY_DATABASE_URL: postgresql+psycopg://openmodelops:${FACTORY_DB_PASSWORD:-local-development-only}@factory-db:5432/openmodelops
@@ -140,7 +140,7 @@ services:
     image: quay.io/keycloak/keycloak:26.3.2
     profiles: ["identity"]
     command: ["start-dev", "--health-enabled=true"]
-    ports: ["8080:8080"]
+    ports: ["8180:8080"]
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-change-me-before-shared-use}
@@ -191,6 +191,13 @@ services:
       - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
     restart: unless-stopped
 
+  phoenix:
+    image: arizephoenix/phoenix:version-11.32.0
+    profiles: ["ai-observability"]
+    ports: ["6006:6006", "4319:4317"]
+    volumes: ["phoenix-data:/root/.phoenix"]
+    restart: unless-stopped
+
 volumes:
   mlops-data:
   mlflow-data:
@@ -202,6 +209,7 @@ volumes:
   factory-db-data:
   reviewer-data:
   kubernetes-sre-data:
+  phoenix-data:
 
 configs:
   factory-schema:

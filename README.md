@@ -46,8 +46,19 @@ The observability and evaluation layer now adds privacy-safe OpenTelemetry/OpenI
 ## Quick start
 
 ```bash
-python -m pytest -q
-docker compose up --build
+python3 -m pytest -q
+make local-up
+make local-smoke
+```
+
+The supported local milestone deliberately excludes AWS and Azure deployment profiles. `make local-up` starts the core services and the sibling ARIA checkout when it exists at `../aria-github-update`. Override that location with `ARIA_REPO=/absolute/path/to/aria`.
+
+Use the resource-bounded profiles as needed:
+
+```bash
+make local-up-ai     # adds Ollama, Qdrant and OpenTelemetry; pulls Qwen + Nomic
+make local-up-full   # adds identity, AI observability and Kubernetes SRE services
+make local-down
 ```
 
 Then open:
@@ -69,6 +80,16 @@ docker compose --profile local-models up -d ollama
 docker compose exec ollama ollama pull qwen2.5:3b
 docker compose up --build agent-api
 ```
+
+### Local Kind environment
+
+```bash
+make kind-create
+make kind-deploy
+make kind-smoke
+```
+
+The Kind deployment creates isolated `openmodelops` and `openmodelops-managed` namespaces, persistent PostgreSQL, runtime-generated integration secrets, resource limits, health probes, default-deny ingress, and separate read-only and change-executor service accounts. Change execution remains disabled by default.
 
 For an NVIDIA GPU environment, set `MODEL_PROVIDER=vllm`, point `MODEL_BASE_URL` at an approved vLLM server, and set `MODEL_ID` to its served model name. Both paths use the same governed `ModelEndpoint` contract.
 
@@ -125,7 +146,8 @@ packages/contracts/    shared, versioned API contracts only
 packages/security/     OIDC verification and RBAC
 packages/observability privacy-safe OpenTelemetry and provider configuration
 feature_store/         Feast-compatible repository configuration
-infra/compose/         runnable local production-like stack
+deploy/local/          shared ARIA/OpenModelOps Compose orchestration
+deploy/kind/           reproducible local Kind control plane
 infra/kubernetes/      probes, policies, autoscaling and disruption controls
 observability/         metrics and dashboards
 evaluation/            golden datasets and quality gates

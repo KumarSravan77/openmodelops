@@ -1,9 +1,14 @@
 FROM python:3.12-slim AS runtime
 ARG SERVICE
 ARG EXTRAS=""
+ARG PIP_INDEX_URL="https://pypi.org/simple"
+ARG PIP_TRUSTED_HOST=""
+ENV PIP_INDEX_URL=${PIP_INDEX_URL} PIP_TRUSTED_HOST=${PIP_TRUSTED_HOST}
 ENV SERVICE=${SERVICE} PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
-RUN useradd --create-home --uid 10001 openmodelops
+RUN useradd --create-home --uid 10001 openmodelops \
+    && mkdir -p /data \
+    && chown openmodelops:openmodelops /data
 COPY pyproject.toml .
 RUN if [ -n "$EXTRAS" ]; then pip install --no-cache-dir ".[${EXTRAS}]"; else pip install --no-cache-dir .; fi
 COPY packages packages

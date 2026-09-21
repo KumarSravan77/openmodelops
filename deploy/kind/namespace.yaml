@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openmodelops
+  labels: {app.kubernetes.io/part-of: openmodelops}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openmodelops-managed
+  labels: {app.kubernetes.io/part-of: openmodelops}
