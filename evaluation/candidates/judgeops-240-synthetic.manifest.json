@@ -1,0 +1,24 @@
+{
+  "cases": 240,
+  "dataset": "evaluation/candidates/judgeops-240-synthetic.jsonl",
+  "domains": {
+    "agent": 60,
+    "banking": 60,
+    "kubernetes": 60,
+    "rag": 60
+  },
+  "generator_version": "1.0.0",
+  "independently_human_labelled": false,
+  "labels": {
+    "agent:fail": 30,
+    "agent:pass": 30,
+    "banking:fail": 30,
+    "banking:pass": 30,
+    "kubernetes:fail": 30,
+    "kubernetes:pass": 30,
+    "rag:fail": 30,
+    "rag:pass": 30
+  },
+  "promotion_requirement": "Two distinct human reviewers must agree on pass/fail for each promoted case.",
+  "sha256": "45889584f0d28a64724b9304b72889f66b489039ddecf1f3768b03799e92c2d3"
+}

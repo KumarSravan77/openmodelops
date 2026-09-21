@@ -219,5 +219,6 @@ See [observability and evaluation](docs/OBSERVABILITY_AND_EVALUATION.md) for fra
 See [JudgeOps](docs/JUDGEOPS.md) for judge trust boundaries, calibration gates and local-model configuration.
 See [DecisionOps](docs/DECISIONOPS.md) for typed decisions, provider boundaries and production qualification requirements.
 See the [JEV assessment](docs/JEV_ASSESSMENT.md) for the evidence, risks and shadow-mode adoption gate.
+See the [JudgeOps dataset guide](docs/JUDGE_DATASET.md) for the 240-case candidate corpus and two-reviewer promotion workflow.
 See [review agent](docs/REVIEW_AGENT.md) for PR review retrieval, fork latching, security checks and human approval rules.
 See [Kubernetes SRE agent](docs/KUBERNETES_SRE_AGENT.md) for runtime boundaries, deployment and safety invariants.

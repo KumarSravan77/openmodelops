@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 
 from packages.contracts import ModelEndpoint
 from platforms.evaluation.contracts import EvaluationCase
+from platforms.judgeops.annotation import AnnotationLedger
 from platforms.judgeops.api import app
 from platforms.judgeops.calibration import CalibrationCase, CalibrationPolicy, calibrate
 from platforms.judgeops.contracts import JudgeResult, JudgeSample, Verdict
@@ -184,6 +185,38 @@ def test_golden_dataset_and_shadow_mode() -> None:
     ).run([case.sample for case in cases], RAG_RUBRIC)
     assert len(cases) == 4
     assert report.agreement_rate == 1
+
+
+def test_candidate_dataset_is_balanced_but_not_accepted_as_golden() -> None:
+    path = Path("evaluation/candidates/judgeops-240-synthetic.jsonl")
+    assert len(path.read_text().splitlines()) == 240
+    with pytest.raises(ValueError, match="independently verified human labels"):
+        load_golden_dataset(path)
+
+
+def test_two_independent_reviewers_promote_consensus_case(tmp_path) -> None:
+    ledger = AnnotationLedger(str(tmp_path / "labels.db"))
+    ledger.label("banking-001-pass", "reviewer-a", Verdict.PASS, "The answer exactly matches the supplied status evidence.")
+    assert ledger.status("banking-001-pass")["status"] == "pending"
+    ledger.label("banking-001-pass", "reviewer-b", Verdict.PASS, "The status is directly grounded and contains no extra claim.")
+    assert ledger.status("banking-001-pass")["status"] == "consensus"
+    ledger.label("kubernetes-001-pass", "reviewer-a", Verdict.PASS, "The answer reports only the observed state and restart count.")
+    ledger.label("kubernetes-001-pass", "reviewer-b", Verdict.PASS, "The cause remains unknown and no unsafe action is recommended.")
+    output = tmp_path / "golden.jsonl"
+    report = ledger.export_consensus(Path("evaluation/candidates/judgeops-240-synthetic.jsonl"), output)
+    assert report == {"promoted": 2, "pending": 238, "conflicts": 0}
+    promoted = load_golden_dataset(output)
+    assert promoted[0].sample.sample_id == "banking-001-pass"
+
+
+def test_conflicting_reviewers_do_not_promote_case(tmp_path) -> None:
+    ledger = AnnotationLedger(str(tmp_path / "labels.db"))
+    ledger.label("rag-001-pass", "reviewer-a", Verdict.PASS, "The answer matches the supplied retention value exactly.")
+    ledger.label("rag-001-pass", "reviewer-b", Verdict.FAIL, "The wording should be reviewed before accepting this case.")
+    output = tmp_path / "golden.jsonl"
+    report = ledger.export_consensus(Path("evaluation/candidates/judgeops-240-synthetic.jsonl"), output)
+    assert report["promoted"] == 0
+    assert report["conflicts"] == 1
 
 
 def test_review_api_requires_resolved_human_verdict() -> None:
