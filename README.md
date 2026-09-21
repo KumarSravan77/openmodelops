@@ -79,6 +79,19 @@ LOAD_PROFILE=load make banking-load
 The benchmark contains generated opaque account tokens and transactions only;
 it has no association with a real financial institution or real customers.
 
+Run the native Apple Silicon inference control plane in dependency-free
+development mode:
+
+```bash
+PYTHON=.venv/bin/python make run-metal
+curl http://127.0.0.1:8008/v1/runtime/profile
+```
+
+For real MLX inference on macOS, install `.[metal]`, set
+`METAL_BACKEND=mlx` and select an MLX-compatible model. This service runs
+natively because Linux containers cannot access Apple Metal. See
+[`docs/METAL_RUNTIME.md`](docs/METAL_RUNTIME.md).
+
 Then open:
 
 - MLOps API: `http://localhost:8001/docs`
@@ -152,6 +165,7 @@ The included Keycloak credentials are development defaults only. Set `KEYCLOAK_A
 | Go admission policy | Implemented fail-closed TLS validation for approval, immutable images and resource bounds | `go/cmd/admission/`, `go/internal/admission/` |
 | Go platform CLI | Implemented shared-platform diagnostics and Kind/workload operations | `go/cmd/omo/` |
 | Synthetic banking performance workload | Implemented deterministic Canadian transaction generation, fraud scoring, k6 traffic profiles, SLO gates and dashboard | `platforms/banking/`, `performance/banking/` |
+| Apple Silicon inference control plane | Implemented hardware profiling, memory admission, two-slot scheduling, prompt-cache indexing, MLX adapter, OpenAI-compatible API and metrics | `platforms/metal_runtime/` |
 
 “Integration-ready” is deliberately not presented as a deployed production service: real production identity, storage, GPUs, DNS, TLS, backups and cloud policies must be supplied by the target environment.
 

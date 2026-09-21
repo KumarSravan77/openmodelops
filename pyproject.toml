@@ -26,6 +26,7 @@ rag = ["langchain-core>=0.3,<2", "langgraph>=0.6,<2"]
 evaluation = ["ragas>=0.3,<1", "deepeval>=3.3,<4"]
 observability = ["langfuse>=4.7,<5", "opik>=1.8,<2", "arize-phoenix-otel>=0.16,<1"]
 kubernetes-sre = ["kubernetes>=36.0.3,<37"]
+metal = ["mlx-lm>=0.30,<1; platform_system == 'Darwin'"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
