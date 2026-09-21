@@ -40,3 +40,19 @@ def test_rejects_tampering_and_expired_replay():
     body, _, nonce, signature = signed(timestamp=expired)
     with pytest.raises(IntelligenceVerificationError, match="replay window"):
         verifier.verify(body, expired, nonce, signature)
+
+
+def test_scorecard_is_tenant_and_workload_scoped():
+    store = AriaIntelligenceStore(create_engine("sqlite:///:memory:"))
+    store.record(
+        {"signal_id": "one", "tenant": "a", "workload_id": "w1", "severity": "critical", "confidence": 0.9},
+        "n1", "now",
+    )
+    store.record(
+        {"signal_id": "two", "tenant": "b", "workload_id": "w1", "severity": "low", "confidence": 0.4},
+        "n2", "now",
+    )
+    result = store.scorecard("a", "w1")
+    assert result["signals"] == 1
+    assert result["release_gate_impact"] == "fail-candidate"
+    assert result["automatic_promotion"] is False

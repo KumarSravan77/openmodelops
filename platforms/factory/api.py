@@ -112,6 +112,13 @@ async def receive_aria_intelligence(
     return {"signal_id": payload["signal_id"], "status": "accepted"}
 
 
+@app.get("/workloads/{workload_id}/incident-scorecard")
+def incident_scorecard(workload_id: str, identity: IdentityDependency) -> dict:
+    authorize(identity, "factory-admin")
+    get_workload(workload_id, identity.tenant)
+    return AriaIntelligenceStore(factory_store().engine).scorecard(identity.tenant, workload_id)
+
+
 def authorize(identity: Identity, role: str) -> None:
     try:
         require_roles(role)(identity)

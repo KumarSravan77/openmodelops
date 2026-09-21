@@ -6,7 +6,7 @@ import json
 import time
 from dataclasses import dataclass
 
-from sqlalchemy import Column, MetaData, String, Table, Text, insert
+from sqlalchemy import Column, MetaData, String, Table, Text, insert, select
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
 
@@ -68,3 +68,25 @@ class AriaIntelligenceStore:
                 )
         except IntegrityError as exc:
             raise IntelligenceVerificationError("ARIA signal or nonce was already accepted") from exc
+
+    def scorecard(self, tenant: str, workload_id: str) -> dict:
+        with self.engine.connect() as connection:
+            rows = connection.execute(select(aria_evidence.c.payload)).scalars().all()
+        matching = []
+        for row in rows:
+            payload = json.loads(row)
+            if payload.get("tenant") == tenant and payload.get("workload_id") == workload_id:
+                matching.append(payload)
+        severity_rank = {"low": 1, "medium": 2, "high": 3, "critical": 4}
+        highest = max(matching, key=lambda item: severity_rank.get(item.get("severity", "low"), 0), default=None)
+        return {
+            "workload_id": workload_id,
+            "signals": len(matching),
+            "critical_or_high": sum(item.get("severity") in {"critical", "high"} for item in matching),
+            "highest_severity": highest.get("severity") if highest else None,
+            "minimum_confidence": min((float(item.get("confidence", 0)) for item in matching), default=None),
+            "release_gate_impact": "fail-candidate"
+            if highest and highest.get("severity") in {"critical", "high"}
+            else "none",
+            "automatic_promotion": False,
+        }
