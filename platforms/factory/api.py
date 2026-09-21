@@ -3,11 +3,12 @@ from __future__ import annotations
 import base64
 import json
 import os
+from datetime import UTC, datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from pydantic import BaseModel
 
 from packages.security.auth import AuthorizationError, Identity, require_roles
@@ -16,6 +17,11 @@ from platforms.factory.catalog import Catalog
 from platforms.factory.domain import SLO, FactorySpec, FactoryWorkload, GateResult, GateStatus, WorkloadKind
 from platforms.factory.governance import EvidenceStatement, EvidenceVerifier, FactoryPolicy
 from platforms.factory.store import ConcurrencyError, FactoryStore
+from platforms.integrations.aria_intelligence import (
+    AriaIntelligenceStore,
+    AriaIntelligenceVerifier,
+    IntelligenceVerificationError,
+)
 
 app = FastAPI(title="OpenModelOps AI SRE Factory", version="0.1.0")
 CATALOG_PATH = Path(__file__).resolve().parents[2] / "catalog" / "components"
@@ -86,6 +92,24 @@ def component_catalog() -> Catalog:
 @lru_cache
 def factory_store() -> FactoryStore:
     return FactoryStore(os.getenv("FACTORY_DATABASE_URL", "sqlite:///./openmodelops-factory.db"))
+
+
+@app.post("/api/v1/intelligence/aria")
+async def receive_aria_intelligence(
+    request: Request,
+    timestamp: str = Header(alias="X-ARIA-Timestamp"),
+    nonce: str = Header(alias="X-ARIA-Nonce"),
+    signature: str = Header(alias="X-ARIA-Signature"),
+) -> dict[str, str]:
+    body = await request.body()
+    try:
+        payload = AriaIntelligenceVerifier(os.getenv("ARIA_INTEGRATION_SECRET", "")).verify(
+            body, timestamp, nonce, signature
+        )
+        AriaIntelligenceStore(factory_store().engine).record(payload, nonce, datetime.now(UTC).isoformat())
+    except IntelligenceVerificationError as exc:
+        raise HTTPException(status_code=401 if "signature" in str(exc) else 409, detail=str(exc)) from exc
+    return {"signal_id": payload["signal_id"], "status": "accepted"}
 
 
 def authorize(identity: Identity, role: str) -> None:

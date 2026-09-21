@@ -103,6 +103,7 @@ The included Keycloak credentials are development defaults only. Set `KEYCLOAK_A
 | Safety-gated PR review agent | Implemented review/comment retrieval, fork latch, security opt-in and approval gate | `platforms/reviewer/` |
 | Kubernetes SRE diagnostics | Implemented official-client collection, deterministic parallel analysis, persistence and scheduled inspection | `platforms/kubernetes_sre/` |
 | Kubernetes remediation | Implemented narrow scale/restart executor with immutable approval digest and three-party separation; deployment remains disabled until production identity and shared durable storage are configured | `platforms/kubernetes_sre/actions.py`, `infra/kubernetes/kubernetes-sre-executor-rbac.yaml` |
+| ARIA incident evidence ingress | Implemented signed, time-bounded and replay-resistant durable ingestion | `platforms/integrations/aria_intelligence.py` |
 
 “Integration-ready” is deliberately not presented as a deployed production service: real production identity, storage, GPUs, DNS, TLS, backups and cloud policies must be supplied by the target environment.
 

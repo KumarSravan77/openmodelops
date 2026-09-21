@@ -88,6 +88,7 @@ services:
       OIDC_ISSUER: ${OIDC_ISSUER:-}
       OIDC_AUDIENCE: ${OIDC_AUDIENCE:-}
       EVIDENCE_PUBLIC_KEYS_JSON: ${EVIDENCE_PUBLIC_KEYS_JSON:-{}}
+      ARIA_INTEGRATION_SECRET: ${ARIA_INTEGRATION_SECRET:-}
     depends_on:
       factory-db:
         condition: service_healthy
