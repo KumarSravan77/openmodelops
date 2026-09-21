@@ -1,11 +1,18 @@
 PYTHON ?= python3
-.PHONY: test lint run-mlops run-agents run-factory validate local-up local-up-ai local-up-full local-down local-smoke kind-create kind-deploy kind-delete kind-smoke
+.PHONY: test lint go-test go-build run-mlops run-agents run-factory validate local-up local-up-ai local-up-full local-down local-smoke kind-create kind-deploy kind-delete kind-smoke
 
 test:
 	$(PYTHON) -m pytest -q
 
 lint:
 	$(PYTHON) -m ruff check .
+	cd go && test -z "$$(gofmt -l .)"
+
+go-test:
+	cd go && go test ./...
+
+go-build:
+	cd go && go build ./cmd/omo ./cmd/operator ./cmd/admission
 
 run-mlops:
 	uvicorn platforms.mlops.api:app --host 0.0.0.0 --port 8001
@@ -16,7 +23,7 @@ run-agents:
 run-factory:
 	uvicorn platforms.factory.api:app --host 0.0.0.0 --port 8004
 
-validate: lint test
+validate: lint test go-test
 
 local-up:
 	./scripts/local-stack.sh up core

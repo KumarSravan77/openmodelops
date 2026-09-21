@@ -1,0 +1,74 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata: {name: modeldeployments.platform.openmodelops.io}
+spec:
+  group: platform.openmodelops.io
+  scope: Namespaced
+  names: {plural: modeldeployments, singular: modeldeployment, kind: ModelDeployment, shortNames: [mdp]}
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources: {status: {}}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required: [image, approved, resources]
+              properties:
+                image: {type: string, pattern: '^.+@sha256:[a-fA-F0-9]{6,}$'}
+                approved: {type: boolean}
+                replicas: {type: integer, format: int32, minimum: 1, maximum: 100, default: 1}
+                port: {type: integer, format: int32, minimum: 1, maximum: 65535, default: 8000}
+                serviceAccountName: {type: string}
+                resources:
+                  type: object
+                  required: [cpuRequest, memoryRequest, cpuLimit, memoryLimit]
+                  properties:
+                    cpuRequest: {type: string}
+                    memoryRequest: {type: string}
+                    cpuLimit: {type: string}
+                    memoryLimit: {type: string}
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata: {name: agentdeployments.platform.openmodelops.io}
+spec:
+  group: platform.openmodelops.io
+  scope: Namespaced
+  names: {plural: agentdeployments, singular: agentdeployment, kind: AgentDeployment, shortNames: [adp]}
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources: {status: {}}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec: {type: object, x-kubernetes-preserve-unknown-fields: true}
+            status: {type: object, x-kubernetes-preserve-unknown-fields: true}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata: {name: evaluationruns.platform.openmodelops.io}
+spec:
+  group: platform.openmodelops.io
+  scope: Namespaced
+  names: {plural: evaluationruns, singular: evaluationrun, kind: EvaluationRun, shortNames: [erun]}
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources: {status: {}}
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec: {type: object, x-kubernetes-preserve-unknown-fields: true}
+            status: {type: object, x-kubernetes-preserve-unknown-fields: true}

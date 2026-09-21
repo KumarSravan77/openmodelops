@@ -1,0 +1,15 @@
+apiVersion: platform.openmodelops.io/v1alpha1
+kind: ModelDeployment
+metadata:
+  name: example-model
+  namespace: openmodelops-managed
+spec:
+  image: registry.example/model@sha256:0123456789abcdef
+  approved: true
+  replicas: 2
+  port: 8000
+  resources:
+    cpuRequest: 100m
+    memoryRequest: 128Mi
+    cpuLimit: "1"
+    memoryLimit: 1Gi

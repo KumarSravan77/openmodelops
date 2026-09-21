@@ -36,6 +36,9 @@ make kind-deploy
 make kind-smoke
 ```
 
+Kind publishes the factory and Kubernetes SRE APIs on host ports `18004` and
+`18006`, keeping them isolated from the Compose services on `8004` and `8006`.
+
 ## Security model
 
 - Integration secrets are generated at deployment time and are not committed.

@@ -1,0 +1,15 @@
+apiVersion: platform.openmodelops.io/v1alpha1
+kind: AgentDeployment
+metadata:
+  name: rejected-latest-tag
+  namespace: openmodelops-managed
+spec:
+  image: registry.example/agent:latest
+  approved: false
+  replicas: 1
+  port: 8000
+  resources:
+    cpuRequest: 100m
+    memoryRequest: 128Mi
+    cpuLimit: "1"
+    memoryLimit: 1Gi

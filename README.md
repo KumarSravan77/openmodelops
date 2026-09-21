@@ -47,9 +47,16 @@ The observability and evaluation layer now adds privacy-safe OpenTelemetry/OpenI
 
 ```bash
 python3 -m pytest -q
+make go-test
 make local-up
 make local-smoke
 ```
+
+Python remains the ML and agent workflow language. Kubernetes reconciliation,
+admission policy and the `omo` platform CLI are implemented in Go; see
+[`docs/GO_CONTROL_PLANE.md`](docs/GO_CONTROL_PLANE.md). Rust adoption follows a
+benchmark-first decision gate rather than adding another runtime without an
+observed performance or memory-safety requirement.
 
 The supported local milestone deliberately excludes AWS and Azure deployment profiles. `make local-up` starts the core services and the sibling ARIA checkout when it exists at `../aria-github-update`. Override that location with `ARIA_REPO=/absolute/path/to/aria`.
 
@@ -89,7 +96,12 @@ make kind-deploy
 make kind-smoke
 ```
 
-The Kind deployment creates isolated `openmodelops` and `openmodelops-managed` namespaces, persistent PostgreSQL, runtime-generated integration secrets, resource limits, health probes, default-deny ingress, and separate read-only and change-executor service accounts. Change execution remains disabled by default.
+The Kind deployment creates isolated `openmodelops` and `openmodelops-managed`
+namespaces, persistent PostgreSQL, runtime-generated integration secrets,
+resource limits, health probes, default-deny ingress, and separate read-only and
+change-executor service accounts. It also installs the Go operator, governed
+workload CRDs, and fail-closed admission policy. Change execution remains
+disabled by default.
 
 For an NVIDIA GPU environment, set `MODEL_PROVIDER=vllm`, point `MODEL_BASE_URL` at an approved vLLM server, and set `MODEL_ID` to its served model name. Both paths use the same governed `ModelEndpoint` contract.
 
@@ -125,6 +137,9 @@ The included Keycloak credentials are development defaults only. Set `KEYCLOAK_A
 | Kubernetes SRE diagnostics | Implemented official-client collection, deterministic parallel analysis, persistence and scheduled inspection | `platforms/kubernetes_sre/` |
 | Kubernetes remediation | Implemented narrow scale/restart executor with immutable approval digest and three-party separation; deployment remains disabled until production identity and shared durable storage are configured | `platforms/kubernetes_sre/actions.py`, `infra/kubernetes/kubernetes-sre-executor-rbac.yaml` |
 | ARIA incident evidence ingress | Implemented signed, time-bounded and replay-resistant durable ingestion | `platforms/integrations/aria_intelligence.py` |
+| Go Kubernetes operator | Implemented model, agent and evaluation reconciliation with leader election and observed status | `go/cmd/operator/`, `go/internal/operator/` |
+| Go admission policy | Implemented fail-closed TLS validation for approval, immutable images and resource bounds | `go/cmd/admission/`, `go/internal/admission/` |
+| Go platform CLI | Implemented shared-platform diagnostics and Kind/workload operations | `go/cmd/omo/` |
 
 “Integration-ready” is deliberately not presented as a deployed production service: real production identity, storage, GPUs, DNS, TLS, backups and cloud policies must be supplied by the target environment.
 

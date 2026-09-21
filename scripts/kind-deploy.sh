@@ -12,3 +12,4 @@ kubectl apply -k "$ROOT/deploy/kind"
 kubectl -n openmodelops rollout status deployment/postgres --timeout=180s
 kubectl -n openmodelops rollout status deployment/factory-api --timeout=180s
 kubectl -n openmodelops rollout status deployment/kubernetes-sre-api --timeout=180s
+"$ROOT/scripts/install-go-control-plane.sh"
