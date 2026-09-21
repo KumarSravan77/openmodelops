@@ -32,6 +32,15 @@ The current implementation also includes an approval-gated AIOps control plane, 
 
 The observability and evaluation layer now adds privacy-safe OpenTelemetry/OpenInference-style spans, OTLP adapters for Langfuse and Phoenix, an Opik integration boundary, provisioned Prometheus/Grafana assets, MLflow registry synchronization, Ragas/DeepEval release gates, and bounded LangChain/LangGraph RAG workflows.
 
+JudgeOps adds governed LLM-as-a-judge execution with versioned rubrics, strict
+structured results, ensemble disagreement policy, prompt-injection screening,
+human calibration metrics and pairwise order-bias testing.
+
+DecisionOps adds typed, versioned decision questions, provider isolation,
+validated fallbacks, circuit breaking, confidence-based human review and
+reproducible audit records. Decisions remain evidence; they never bypass policy,
+approval or executor boundaries.
+
 ## Guarantees demonstrated
 
 - Explicit lifecycle state machines prevent unreviewed promotion.
@@ -100,6 +109,7 @@ Then open:
 - Factory API: `http://localhost:8004/docs`
 - Review Agent API: `http://localhost:8005/docs`
 - Kubernetes SRE API: `http://localhost:8006/docs` (profile: `kubernetes-sre`)
+- JudgeOps API: `http://localhost:8009/docs`
 - MLflow: `http://localhost:5000`
 - Grafana: `http://localhost:3000`
 - Prometheus: `http://localhost:9090`
@@ -155,6 +165,8 @@ The included Keycloak credentials are development defaults only. Set `KEYCLOAK_A
 | Langfuse and Phoenix | Implemented via native OTLP export configuration | `packages/observability/` |
 | Opik | Implemented native SDK adapter; external deployment required | `packages/observability/` |
 | Ragas and DeepEval | Implemented optional runners and deterministic quality gate | `platforms/evaluation/` |
+| Governed LLM-as-a-judge | Implemented versioned rubrics, strict parsing, ensembles, injection screening, calibration and release-gate adapter | `platforms/judgeops/` |
+| Governed decision intelligence | Implemented typed contracts, question registry, validation, fallback, circuit breaker and reproducible decision records; production provider and durable service are pending | `platforms/decisionops/`, `catalog/questions/` |
 | LangChain and LangGraph | Implemented optional Runnable and bounded corrective graph | `platforms/rag/` |
 | MLflow synchronization | Implemented registry, alias and governance-tag REST adapter | `platforms/integrations/mlflow.py` |
 | Safety-gated PR review agent | Implemented review/comment retrieval, fork latch, security opt-in and approval gate | `platforms/reviewer/` |
@@ -183,6 +195,8 @@ platforms/reviewer/    GitHub/GHES review aggregation and approval gate
 platforms/kubernetes_sre/ Kubernetes inspection, specialist analysis and safety-gated changes
 platforms/rag/         corrective RAG plus LangChain/LangGraph boundaries
 platforms/evaluation/  Ragas/DeepEval runners and fail-closed quality gates
+platforms/judgeops/    governed judges, rubrics, calibration and bias testing
+platforms/decisionops/ typed decisions, question registry, failover and audit records
 packages/contracts/    shared, versioned API contracts only
 packages/security/     OIDC verification and RBAC
 packages/observability privacy-safe OpenTelemetry and provider configuration
@@ -201,5 +215,7 @@ See the [product requirements](docs/PRODUCT_REQUIREMENTS.md) for personas, measu
 See [durable governance](docs/DURABLE_GOVERNANCE.md) for persistence, OIDC, signed evidence and release-policy configuration.
 See [integration contracts](docs/INTEGRATION_CONTRACTS.md) for ARIA, On-Call SRE, model-serving, agent-gateway and evaluation boundaries.
 See [observability and evaluation](docs/OBSERVABILITY_AND_EVALUATION.md) for framework support levels, privacy controls and release-gate behavior.
+See [JudgeOps](docs/JUDGEOPS.md) for judge trust boundaries, calibration gates and local-model configuration.
+See [DecisionOps](docs/DECISIONOPS.md) for typed decisions, provider boundaries and production qualification requirements.
 See [review agent](docs/REVIEW_AGENT.md) for PR review retrieval, fork latching, security checks and human approval rules.
 See [Kubernetes SRE agent](docs/KUBERNETES_SRE_AGENT.md) for runtime boundaries, deployment and safety invariants.

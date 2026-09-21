@@ -39,6 +39,21 @@ services:
     tmpfs: ["/tmp"]
     security_opt: ["no-new-privileges:true"]
 
+  judgeops-api:
+    build:
+      context: .
+      args: { SERVICE: judgeops, PIP_INDEX_URL: "${PIP_INDEX_URL:-https://pypi.org/simple}", PIP_TRUSTED_HOST: "${PIP_TRUSTED_HOST:-}" }
+    ports: ["8009:8000"]
+    environment:
+      JUDGE_PROVIDER: ${JUDGE_PROVIDER:-deterministic}
+      JUDGE_MODEL_ID: ${JUDGE_MODEL_ID:-mlx-community/Qwen3-0.6B-4bit}
+      JUDGE_MODEL_BASE_URL: ${JUDGE_MODEL_BASE_URL:-http://host.docker.internal:8008}
+      JUDGE_MODEL_API_KEY: ${JUDGE_MODEL_API_KEY:-}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+
   kubernetes-sre-api:
     profiles: ["kubernetes-sre"]
     build:

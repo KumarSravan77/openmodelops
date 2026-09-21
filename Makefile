@@ -1,5 +1,5 @@
 PYTHON ?= python3
-.PHONY: test lint go-test go-build run-mlops run-agents run-factory run-metal validate local-up local-up-ai local-up-full local-down local-smoke banking-up banking-smoke banking-load banking-down kind-create kind-deploy kind-delete kind-smoke
+.PHONY: test lint go-test go-build run-mlops run-agents run-factory run-metal run-judgeops validate local-up local-up-ai local-up-full local-down local-smoke banking-up banking-smoke banking-load banking-down kind-create kind-deploy kind-delete kind-smoke
 
 test:
 	$(PYTHON) -m pytest -q
@@ -25,6 +25,9 @@ run-factory:
 
 run-metal:
 	$(PYTHON) -m uvicorn platforms.metal_runtime.api:app --host 127.0.0.1 --port 8008
+
+run-judgeops:
+	$(PYTHON) -m uvicorn platforms.judgeops.api:app --host 127.0.0.1 --port 8009
 
 validate: lint test go-test
 

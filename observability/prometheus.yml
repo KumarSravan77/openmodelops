@@ -10,3 +10,5 @@ scrape_configs:
     static_configs: [{ targets: ["kubernetes-sre-api:8000"] }]
   - job_name: synthetic-banking-workload
     static_configs: [{ targets: ["banking-api:8000"] }]
+  - job_name: openmodelops-judgeops
+    static_configs: [{ targets: ["judgeops-api:8000"] }]

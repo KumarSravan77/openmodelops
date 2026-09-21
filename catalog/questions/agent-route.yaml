@@ -1,0 +1,10 @@
+question_id: agent.route
+version: "1.0.0"
+decision_type: choice
+description: Select the specialist agent best suited to inspect the supplied operational state.
+owner: openmodelops-platform
+required_state: [signal_type, affected_resource, evidence_summary]
+options: [kubernetes, database, network, application, security, human]
+confidence_threshold: 0.85
+cacheable: false
+risk_tier: standard

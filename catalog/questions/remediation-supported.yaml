@@ -1,0 +1,9 @@
+question_id: remediation.supported
+version: "1.0.0"
+decision_type: probability
+description: Estimate whether the proposed remediation is supported by the supplied evidence and approved policy.
+owner: openmodelops-platform
+required_state: [proposal, evidence, policy_result]
+confidence_threshold: 0.95
+cacheable: false
+risk_tier: critical
