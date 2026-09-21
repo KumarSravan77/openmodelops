@@ -14,6 +14,7 @@ RUN if [ -n "$EXTRAS" ]; then pip install --no-cache-dir ".[${EXTRAS}]"; else pi
 COPY packages packages
 COPY platforms platforms
 COPY catalog catalog
+COPY examples examples
 COPY .beacode .beacode
 USER 10001
 EXPOSE 8000

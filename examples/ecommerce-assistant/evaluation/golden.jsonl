@@ -1,0 +1,8 @@
+{"question":"Recommend noise-cancelling headphones under CAD 300.","expected_product_ids":["prod-001"],"expected_status":"grounded"}
+{"question":"Find a quiet wireless keyboard for a shared office.","expected_product_ids":["prod-005"],"expected_status":"grounded"}
+{"question":"Which catalog product supports 4K design work and USB-C power?","expected_product_ids":["prod-006"],"expected_status":"grounded"}
+{"question":"I need a GPS fitness watch.","expected_product_ids":["prod-007"],"expected_status":"grounded"}
+{"question":"Recommend a coffee grinder with burrs.","expected_product_ids":["prod-009"],"expected_status":"grounded"}
+{"question":"Find a compact charger under CAD 80.","expected_product_ids":["prod-011"],"expected_status":"grounded"}
+{"question":"Which laptop has an RTX 5090?","expected_product_ids":[],"expected_status":"insufficient_evidence"}
+{"question":"What is today's live competitor price?","expected_product_ids":[],"expected_status":"insufficient_evidence"}

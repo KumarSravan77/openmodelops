@@ -145,6 +145,29 @@ services:
       resources:
         limits: {cpus: "1.0", memory: 512M}
 
+  ecommerce-api:
+    profiles: ["ecommerce"]
+    build:
+      context: .
+      args: { SERVICE: ecommerce, PIP_INDEX_URL: "${PIP_INDEX_URL:-https://pypi.org/simple}", PIP_TRUSTED_HOST: "${PIP_TRUSTED_HOST:-}" }
+    ports: ["8010:8000"]
+    environment:
+      ECOMMERCE_CATALOG: examples/ecommerce-assistant/data/products.json
+      ECOMMERCE_MODEL_PROVIDER: ${ECOMMERCE_MODEL_PROVIDER:-deterministic}
+      ECOMMERCE_MODEL_ID: ${ECOMMERCE_MODEL_ID:-qwen2.5:3b}
+      ECOMMERCE_MODEL_BASE_URL: ${ECOMMERCE_MODEL_BASE_URL:-http://ollama:11434}
+      ECOMMERCE_MODEL_API_KEY: ${ECOMMERCE_MODEL_API_KEY:-}
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}
+      OPENMODELOPS_TELEMETRY_PROVIDER: ${OPENMODELOPS_TELEMETRY_PROVIDER:-otlp}
+      OPENMODELOPS_CAPTURE_AI_CONTENT: "false"
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    deploy:
+      resources:
+        limits: {cpus: "1.0", memory: 512M}
+
   banking-load:
     image: grafana/k6:0.57.0
     profiles: ["load-test"]

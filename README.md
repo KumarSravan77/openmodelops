@@ -88,6 +88,21 @@ LOAD_PROFILE=load make banking-load
 The benchmark contains generated opaque account tokens and transactions only;
 it has no association with a real financial institution or real customers.
 
+Run the local-first synthetic e-commerce assistant:
+
+```bash
+docker compose --profile ecommerce up -d --build ecommerce-api
+# browser UI and API documentation
+open http://localhost:8010
+open http://localhost:8010/docs
+```
+
+This reference workload demonstrates hybrid/MMR product retrieval, bounded
+corrective search, grounded citations, deny-by-default MCP-style tools, a
+FastAPI chat UI, golden evaluation cases and privacy-safe telemetry. It uses no
+commerce-site scraping or customer data. See
+[`examples/ecommerce-assistant/README.md`](examples/ecommerce-assistant/README.md).
+
 Run the native Apple Silicon inference control plane in dependency-free
 development mode:
 
@@ -178,6 +193,7 @@ The included Keycloak credentials are development defaults only. Set `KEYCLOAK_A
 | Go admission policy | Implemented fail-closed TLS validation for approval, immutable images and resource bounds | `go/cmd/admission/`, `go/internal/admission/` |
 | Go platform CLI | Implemented shared-platform diagnostics and Kind/workload operations | `go/cmd/omo/` |
 | Synthetic banking performance workload | Implemented deterministic Canadian transaction generation, fraud scoring, k6 traffic profiles, SLO gates and dashboard | `platforms/banking/`, `performance/banking/` |
+| E-commerce LLMOps reference workload | Implemented synthetic catalog, hybrid/MMR retrieval, corrective flow, citations, governed MCP-style tools, chat UI, tests and Kubernetes manifest | `platforms/ecommerce/`, `examples/ecommerce-assistant/` |
 | Apple Silicon inference control plane | Implemented hardware profiling, memory admission, two-slot scheduling, prompt-cache indexing, MLX adapter, OpenAI-compatible API and metrics | `platforms/metal_runtime/` |
 
 “Integration-ready” is deliberately not presented as a deployed production service: real production identity, storage, GPUs, DNS, TLS, backups and cloud policies must be supplied by the target environment.
@@ -198,6 +214,7 @@ platforms/rag/         corrective RAG plus LangChain/LangGraph boundaries
 platforms/evaluation/  Ragas/DeepEval runners and fail-closed quality gates
 platforms/judgeops/    governed judges, rubrics, calibration and bias testing
 platforms/decisionops/ typed decisions, question registry, failover and audit records
+platforms/ecommerce/   product retrieval, corrective assistant and governed tools
 packages/contracts/    shared, versioned API contracts only
 packages/security/     OIDC verification and RBAC
 packages/observability privacy-safe OpenTelemetry and provider configuration
