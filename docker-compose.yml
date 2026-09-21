@@ -49,6 +49,8 @@ services:
       JUDGE_MODEL_ID: ${JUDGE_MODEL_ID:-mlx-community/Qwen3-0.6B-4bit}
       JUDGE_MODEL_BASE_URL: ${JUDGE_MODEL_BASE_URL:-http://host.docker.internal:8008}
       JUDGE_MODEL_API_KEY: ${JUDGE_MODEL_API_KEY:-}
+      JUDGEOPS_DATABASE: /data/judgeops.db
+    volumes: ["judgeops-data:/data"]
     restart: unless-stopped
     read_only: true
     tmpfs: ["/tmp"]
@@ -252,6 +254,7 @@ volumes:
   factory-db-data:
   reviewer-data:
   kubernetes-sre-data:
+  judgeops-data:
   phoenix-data:
 
 configs:

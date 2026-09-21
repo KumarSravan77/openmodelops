@@ -25,6 +25,7 @@ class QuestionDefinition(BaseModel):
     owner: str = Field(min_length=1, max_length=120)
     required_state: list[str] = Field(min_length=1, max_length=100)
     options: list[str] = Field(default_factory=list, max_length=100)
+    score_levels: list[str] = Field(default_factory=list, max_length=100)
     minimum_score: float = 0
     maximum_score: float = 1
     confidence_threshold: float = Field(default=0.8, ge=0, le=1)
@@ -37,6 +38,10 @@ class QuestionDefinition(BaseModel):
             raise ValueError("choice questions require at least two options")
         if self.decision_type != DecisionType.CHOICE and self.options:
             raise ValueError("only choice questions may define options")
+        if self.decision_type == DecisionType.SCORE and len(self.score_levels) < 2:
+            raise ValueError("score questions require at least two ordered score_levels")
+        if self.decision_type != DecisionType.SCORE and self.score_levels:
+            raise ValueError("only score questions may define score_levels")
         if self.decision_type == DecisionType.SCORE and self.minimum_score >= self.maximum_score:
             raise ValueError("score questions require minimum_score below maximum_score")
         if self.risk_tier == "critical" and self.cacheable:

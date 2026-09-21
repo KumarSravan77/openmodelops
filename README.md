@@ -167,6 +167,7 @@ The included Keycloak credentials are development defaults only. Set `KEYCLOAK_A
 | Ragas and DeepEval | Implemented optional runners and deterministic quality gate | `platforms/evaluation/` |
 | Governed LLM-as-a-judge | Implemented versioned rubrics, strict parsing, ensembles, injection screening, calibration and release-gate adapter | `platforms/judgeops/` |
 | Governed decision intelligence | Implemented typed contracts, question registry, validation, fallback, circuit breaker and reproducible decision records; production provider and durable service are pending | `platforms/decisionops/`, `catalog/questions/` |
+| TypeSafe JEV | Optional Choice/Score/Noul adapter implemented for shadow evaluation; not installed or production-approved by default | `platforms/decisionops/jev.py`, `docs/JEV_ASSESSMENT.md` |
 | LangChain and LangGraph | Implemented optional Runnable and bounded corrective graph | `platforms/rag/` |
 | MLflow synchronization | Implemented registry, alias and governance-tag REST adapter | `platforms/integrations/mlflow.py` |
 | Safety-gated PR review agent | Implemented review/comment retrieval, fork latch, security opt-in and approval gate | `platforms/reviewer/` |
@@ -217,5 +218,6 @@ See [integration contracts](docs/INTEGRATION_CONTRACTS.md) for ARIA, On-Call SRE
 See [observability and evaluation](docs/OBSERVABILITY_AND_EVALUATION.md) for framework support levels, privacy controls and release-gate behavior.
 See [JudgeOps](docs/JUDGEOPS.md) for judge trust boundaries, calibration gates and local-model configuration.
 See [DecisionOps](docs/DECISIONOPS.md) for typed decisions, provider boundaries and production qualification requirements.
+See the [JEV assessment](docs/JEV_ASSESSMENT.md) for the evidence, risks and shadow-mode adoption gate.
 See [review agent](docs/REVIEW_AGENT.md) for PR review retrieval, fork latching, security checks and human approval rules.
 See [Kubernetes SRE agent](docs/KUBERNETES_SRE_AGENT.md) for runtime boundaries, deployment and safety invariants.

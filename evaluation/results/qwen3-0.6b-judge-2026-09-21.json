@@ -1,0 +1,12 @@
+{
+  "candidate": "mlx-community/Qwen3-0.6B-4bit",
+  "dataset": "evaluation/golden/judgeops-rag.jsonl",
+  "mode": "shadow_only",
+  "production_qualified": false,
+  "qualification_failures": ["provider_errors"],
+  "provider_error_count": 4,
+  "cases": 4,
+  "shadow_agreement_rate": 0.0,
+  "finding": "The model returned JSON but used out-of-contract verdict values such as correct and No. Strict validation rejected all four results. The model remains an integration proof and is not a production judge.",
+  "rubric_digest": "sha256:38b2c1d1c4a17f4d31dd8e8bb383badfc9f7dab4b0b37129081bab53ae54c7af"
+}

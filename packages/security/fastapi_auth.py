@@ -23,6 +23,7 @@ def current_identity(authorization: str | None = Header(default=None)) -> Identi
                     "sre-proposer",
                     "sre-approver",
                     "sre-executor",
+                    "judge-reviewer",
                 }
             ),
             tenant=os.getenv("DEV_TENANT", "local"),

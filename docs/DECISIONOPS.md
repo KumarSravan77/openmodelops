@@ -25,6 +25,10 @@ The initial registry includes agent routing and remediation-support questions in
 `catalog/questions/`. New questions must be reviewed like code and must define an
 owner, required state, risk tier and confidence threshold.
 
+An optional TypeSafe JEV adapter is implemented for controlled benchmarks and
+shadow execution. See [JEV assessment](JEV_ASSESSMENT.md). It is not installed or
+enabled by default.
+
 ## Trust boundary
 
 DecisionOps separates four concerns:
@@ -63,5 +67,5 @@ without independent deterministic and human evidence.
 
 The contracts, registry, engine, validation, fallback, circuit breaker, cache
 safety and audit records are implemented and unit tested. A production decision
-provider, durable decision-record store, service API, human-review UI and
+provider-specific production qualification, durable decision-record service and
 domain-specific calibration dataset are intentionally not claimed as complete.

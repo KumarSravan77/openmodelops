@@ -16,7 +16,11 @@ production dependency.
 - Multi-judge median aggregation, confidence policy and disagreement routing.
 - Pairwise forward/reversed evaluation for position-bias detection.
 - Human-label calibration with accuracy, false-pass rate, false-fail rate and
-  Cohen's kappa.
+  Cohen's kappa, precision, recall and optional Brier score.
+- Durable content-minimizing evaluation records and an OIDC/RBAC-protected
+  human-review queue.
+- Golden-dataset loader, shadow-provider comparison and fail-closed calibration
+  qualification policy.
 - Worst-case per-dimension adapter into the existing fail-closed release gate.
 - Prometheus request and latency telemetry.
 
@@ -63,6 +67,20 @@ PYTHON=.venv/bin/python make run-judgeops
 The 0.6B model is only an integration test. It is not an acceptable production
 judge for high-risk decisions.
 
+Run the reproducible shadow qualification harness against any OpenAI-compatible
+local or remote model:
+
+```bash
+.venv/bin/python tools/run_judge_experiment.py \
+  --base-url http://127.0.0.1:8008 \
+  --model mlx-community/Qwen3-0.6B-4bit \
+  --output evaluation/results/candidate-report.json
+```
+
+The checked-in 0.6B evidence correctly fails qualification because every case
+returned an out-of-contract verdict. Provider failures become report evidence;
+they never influence the active decision path.
+
 ## Release requirements
 
 A production judge revision should not be promoted until it meets a documented
@@ -81,12 +99,11 @@ Thresholds must be selected for the domain rather than copied blindly from this
 example. Banking, operational remediation and autonomous tool use require more
 conservative false-pass policies than low-risk content ranking.
 
-## Remaining qualification work
+## Remaining domain work
 
 - Curate 200–500 independently labelled cases across RAG, agent and numeric
   workflows.
 - Add a second model-family provider and repeated-run variance measurement.
-- Persist immutable per-case results and human adjudication history.
 - Sample production traces using privacy-preserving redaction and consent rules.
 - Measure cost, latency and score drift for every judge revision.
 - Add adversarial multilingual and multimodal judge-injection datasets.
