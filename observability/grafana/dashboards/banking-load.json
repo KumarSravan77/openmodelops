@@ -1,0 +1,41 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "panels": [
+    {
+      "title": "Scoring throughput",
+      "type": "timeseries",
+      "targets": [{"expr": "sum(rate(banking_score_requests_total[1m]))", "legendFormat": "requests/s", "refId": "A"}],
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 0}
+    },
+    {
+      "title": "P95 scoring latency",
+      "type": "timeseries",
+      "targets": [{"expr": "histogram_quantile(0.95, sum by (le) (rate(banking_score_duration_seconds_bucket[5m])))", "legendFormat": "p95", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 8, "y": 0}
+    },
+    {
+      "title": "Decisions",
+      "type": "timeseries",
+      "targets": [{"expr": "sum by (decision) (rate(banking_score_requests_total{duplicate=\"false\"}[5m]))", "legendFormat": "{{decision}}", "refId": "A"}],
+      "gridPos": {"h": 8, "w": 8, "x": 16, "y": 0}
+    },
+    {
+      "title": "Duplicate replay rate",
+      "type": "stat",
+      "targets": [{"expr": "sum(rate(banking_score_requests_total{duplicate=\"true\"}[5m])) / clamp_min(sum(rate(banking_score_requests_total[5m])), 0.000001)", "refId": "A"}],
+      "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides": []},
+      "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8}
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 41,
+  "tags": ["openmodelops", "synthetic", "banking", "performance"],
+  "templating": {"list": []},
+  "time": {"from": "now-30m", "to": "now"},
+  "timezone": "browser",
+  "title": "Synthetic Canadian Banking Load",
+  "uid": "openmodelops-banking-load",
+  "version": 1
+}

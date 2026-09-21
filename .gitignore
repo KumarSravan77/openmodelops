@@ -9,3 +9,6 @@ __pycache__/
 *.tfstate*
 .ruff_cache/
 *.egg-info/
+artifacts/performance/*.json
+artifacts/performance/*.ndjson
+!artifacts/performance/.gitkeep

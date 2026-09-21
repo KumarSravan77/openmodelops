@@ -1,5 +1,5 @@
 PYTHON ?= python3
-.PHONY: test lint go-test go-build run-mlops run-agents run-factory validate local-up local-up-ai local-up-full local-down local-smoke kind-create kind-deploy kind-delete kind-smoke
+.PHONY: test lint go-test go-build run-mlops run-agents run-factory validate local-up local-up-ai local-up-full local-down local-smoke banking-up banking-smoke banking-load banking-down kind-create kind-deploy kind-delete kind-smoke
 
 test:
 	$(PYTHON) -m pytest -q
@@ -39,6 +39,18 @@ local-down:
 
 local-smoke:
 	./scripts/local-smoke-test.sh
+
+banking-up:
+	docker compose --profile banking-benchmark up -d --build banking-api
+
+banking-smoke:
+	LOAD_PROFILE=smoke docker compose --profile load-test run --rm banking-load
+
+banking-load:
+	docker compose --profile load-test run --rm banking-load
+
+banking-down:
+	docker compose --profile banking-benchmark --profile load-test down
 
 kind-create:
 	kind create cluster --name openmodelops --config deploy/kind/cluster.yaml

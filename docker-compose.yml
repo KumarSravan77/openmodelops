@@ -114,6 +114,34 @@ services:
       retries: 10
     restart: unless-stopped
 
+  banking-api:
+    profiles: ["banking-benchmark", "load-test"]
+    build:
+      context: .
+      args: { SERVICE: banking, PIP_INDEX_URL: "${PIP_INDEX_URL:-https://pypi.org/simple}", PIP_TRUSTED_HOST: "${PIP_TRUSTED_HOST:-}" }
+    ports: ["8007:8000"]
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp"]
+    security_opt: ["no-new-privileges:true"]
+    deploy:
+      resources:
+        limits: {cpus: "1.0", memory: 512M}
+
+  banking-load:
+    image: grafana/k6:0.57.0
+    profiles: ["load-test"]
+    depends_on:
+      banking-api: {condition: service_healthy}
+    environment:
+      BANKING_BASE_URL: http://banking-api:8000
+      LOAD_PROFILE: ${LOAD_PROFILE:-smoke}
+      DEBUG_ERRORS: ${DEBUG_ERRORS:-false}
+    volumes:
+      - ./performance/banking/k6:/scripts:ro
+      - ./artifacts/performance:/results
+    command: ["run", "/scripts/scenario.js"]
+
   ollama:
     image: ollama/ollama:0.11.4
     profiles: ["local-models"]

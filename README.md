@@ -68,6 +68,17 @@ make local-up-full   # adds identity, AI observability and Kubernetes SRE servic
 make local-down
 ```
 
+Run the synthetic Canadian banking workload and its reproducible traffic gate:
+
+```bash
+make banking-up
+make banking-smoke
+LOAD_PROFILE=load make banking-load
+```
+
+The benchmark contains generated opaque account tokens and transactions only;
+it has no association with a real financial institution or real customers.
+
 Then open:
 
 - MLOps API: `http://localhost:8001/docs`
@@ -140,6 +151,7 @@ The included Keycloak credentials are development defaults only. Set `KEYCLOAK_A
 | Go Kubernetes operator | Implemented model, agent and evaluation reconciliation with leader election and observed status | `go/cmd/operator/`, `go/internal/operator/` |
 | Go admission policy | Implemented fail-closed TLS validation for approval, immutable images and resource bounds | `go/cmd/admission/`, `go/internal/admission/` |
 | Go platform CLI | Implemented shared-platform diagnostics and Kind/workload operations | `go/cmd/omo/` |
+| Synthetic banking performance workload | Implemented deterministic Canadian transaction generation, fraud scoring, k6 traffic profiles, SLO gates and dashboard | `platforms/banking/`, `performance/banking/` |
 
 “Integration-ready” is deliberately not presented as a deployed production service: real production identity, storage, GPUs, DNS, TLS, backups and cloud policies must be supplied by the target environment.
 
