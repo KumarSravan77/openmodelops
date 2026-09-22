@@ -64,7 +64,7 @@ def main() -> int:
         "finding_codes": [item["code"] for item in investigated["findings"]],
         "fire_drill_report": investigated["fire_drill_report"],
         "slo": investigated["slo"],
-        "kafka_agent_available": investigated["investigation"]["available"],
+        "live_kafka_evidence_complete": investigated["investigation"]["live_evidence_complete"],
         "decision": investigated["decision"],
         "qualification_verdict": investigated["qualification_verdict"],
     }, indent=2, sort_keys=True))
