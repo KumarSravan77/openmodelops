@@ -1,0 +1,20 @@
+{
+  "cluster": "local-redpanda",
+  "workload_id": "payment-stream",
+  "topic": "payments",
+  "consumer_group": "fraud-detector",
+  "produced_total": 100000,
+  "consumed_total": 80000,
+  "eligible_events_total": 100000,
+  "completed_within_objective_total": 80000,
+  "consumer_lag": 20000,
+  "partition_lag": {"0": 18000, "1": 1000, "2": 1000},
+  "rebalances_5m": 8,
+  "under_replicated_partitions": 0,
+  "offline_partitions": 0,
+  "schema_errors_5m": 0,
+  "duplicate_rate": 0,
+  "dlq_rate": 0,
+  "disk_used_percent": 45,
+  "p99_latency_ms": 1800
+}

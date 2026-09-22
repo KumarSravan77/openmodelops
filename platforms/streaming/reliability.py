@@ -19,9 +19,13 @@ class Severity(StrEnum):
 class StreamingSnapshot(BaseModel):
     cluster: str = "local-redpanda"
     workload_id: str = "streaming-reference"
+    topic: str | None = None
+    consumer_group: str | None = None
     observed_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     produced_total: int = Field(ge=0)
     consumed_total: int = Field(ge=0)
+    eligible_events_total: int | None = Field(default=None, ge=0)
+    completed_within_objective_total: int | None = Field(default=None, ge=0)
     consumer_lag: int = Field(ge=0)
     partition_lag: dict[str, int] = Field(default_factory=dict)
     rebalances_5m: int = Field(default=0, ge=0)
@@ -37,6 +41,10 @@ class StreamingSnapshot(BaseModel):
     def validate_partition_lag(self) -> StreamingSnapshot:
         if any(value < 0 for value in self.partition_lag.values()):
             raise ValueError("partition lag cannot be negative")
+        if (self.eligible_events_total is None) != (self.completed_within_objective_total is None):
+            raise ValueError("both on-time cohort counters are required together")
+        if self.eligible_events_total is not None and self.completed_within_objective_total > self.eligible_events_total:
+            raise ValueError("on-time completions cannot exceed eligible events")
         return self
 
 
@@ -50,10 +58,10 @@ class Finding(BaseModel):
 
 class SLOAssessment(BaseModel):
     target: float
-    availability: float
+    completion_ratio: float | None
     error_budget_fraction: float
-    budget_consumed_percent: float
-    burn_rate: float
+    budget_consumed_percent: float | None
+    burn_rate: float | None
     status: str
 
 
@@ -98,17 +106,19 @@ SEVERITY_RANK = {
 def assess_slo(snapshot: StreamingSnapshot, target: float = 0.999) -> SLOAssessment:
     if not 0 < target < 1:
         raise ValueError("SLO target must be between zero and one")
-    if snapshot.produced_total == 0:
-        availability = 1.0
-    else:
-        availability = min(snapshot.consumed_total, snapshot.produced_total) / snapshot.produced_total
-    observed_error = 1 - availability
     allowed_error = 1 - target
+    if snapshot.eligible_events_total is None or snapshot.eligible_events_total == 0:
+        return SLOAssessment(
+            target=target, completion_ratio=None, error_budget_fraction=round(allowed_error, 6),
+            budget_consumed_percent=None, burn_rate=None, status="insufficient-data",
+        )
+    completion_ratio = snapshot.completed_within_objective_total / snapshot.eligible_events_total
+    observed_error = 1 - completion_ratio
     burn_rate = observed_error / allowed_error
     consumed = max(0.0, observed_error / allowed_error * 100)
     return SLOAssessment(
         target=target,
-        availability=round(availability, 6),
+        completion_ratio=round(completion_ratio, 6),
         error_budget_fraction=round(allowed_error, 6),
         budget_consumed_percent=round(consumed, 2),
         burn_rate=round(burn_rate, 2),
@@ -167,8 +177,8 @@ def diagnose(snapshot: StreamingSnapshot, target: float = 0.999) -> StreamingAss
 
     slo = assess_slo(snapshot, target)
     if slo.status == "exhausted":
-        add("ERROR_BUDGET_EXHAUSTED", Severity.HIGH, "The streaming availability error budget is exhausted.",
-            {"burn_rate": slo.burn_rate, "availability": slo.availability, "target": slo.target},
+        add("ERROR_BUDGET_EXHAUSTED", Severity.HIGH, "The on-time event completion budget is exhausted.",
+            {"burn_rate": slo.burn_rate, "completion_ratio": slo.completion_ratio, "target": slo.target},
             ["Freeze non-remediation changes", "Open a reliability review with accountable owners"])
 
     severity = max((finding.severity for finding in findings), key=SEVERITY_RANK.get, default=Severity.INFO)

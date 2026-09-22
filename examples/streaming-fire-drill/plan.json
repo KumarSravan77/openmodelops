@@ -1,0 +1,10 @@
+{
+  "service": "payment-events",
+  "environment": "staging",
+  "scenario": "network-latency",
+  "duration_seconds": 120,
+  "blast_radius_percent": 10,
+  "rollback_command": "remove approved sandbox latency rule",
+  "stop_conditions": ["consumer lag above 10000"],
+  "approved_by": "reliability-reviewer"
+}

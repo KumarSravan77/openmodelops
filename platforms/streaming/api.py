@@ -3,9 +3,11 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, generate_latest
+from pydantic import BaseModel, Field
 
 from platforms.streaming.reliability import StreamingAssessment, StreamingSnapshot, diagnose, render_crca
 
@@ -25,6 +27,79 @@ SCENARIO_PATH = Path(
 RECENT: dict[str, StreamingAssessment] = {}
 
 
+class FireDrillEnvelope(BaseModel):
+    schema_version: Literal["1.0"]
+    source: Literal["fire-drill"]
+    evidence_mode: Literal["synthetic"]
+    event_id: str
+    experiment_id: str
+    service: str
+    environment: Literal["development", "staging"]
+    scenario: str
+    phase: Literal["observed"]
+    observed_at: str
+    plan_digest: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    approved_by: str | None = None
+    blast_radius_percent: int = Field(ge=1, le=25)
+    stop_conditions: list[str] = Field(min_length=1)
+    report_card: dict[str, object]
+    snapshot: StreamingSnapshot
+
+
+def evaluate_fire_drill(envelope: FireDrillEnvelope) -> dict[str, object]:
+    if envelope.schema_version != "1.0" or envelope.source != "fire-drill" or envelope.phase != "observed":
+        raise ValueError("unsupported Fire Drill evidence contract")
+    assessment = record(envelope.snapshot)
+    severity = {"critical": "P1", "high": "P2", "medium": "P3", "low": "P4", "info": "P4"}[
+        assessment.severity.value
+    ]
+    codes = [finding.code for finding in assessment.findings]
+    qualification_verdict = (
+        "ACTION_REQUIRED"
+        if envelope.report_card.get("verdict") != "PASS" or assessment.slo.status != "healthy"
+        else "PASS"
+    )
+    return {
+        "schema_version": "1.0",
+        "source": "openmodelops",
+        "evidence_mode": envelope.evidence_mode,
+        "experiment_id": envelope.experiment_id,
+        "event_id": envelope.event_id,
+        "plan_digest": envelope.plan_digest,
+        "fire_drill_report": envelope.report_card,
+        "qualification_verdict": qualification_verdict,
+        "assessment": assessment.model_dump(mode="json"),
+        "aria_request": {
+            "incident": {
+                "incident_id": assessment.incident_id,
+                "service": envelope.service,
+                "severity": severity,
+                "source": "fire-drill",
+                "signals": ["kafka", "streaming", *codes],
+                "topic": envelope.snapshot.topic,
+                "consumer_group": envelope.snapshot.consumer_group,
+            },
+            "context": {
+                "experiment_id": envelope.experiment_id,
+                "event_id": envelope.event_id,
+                "plan_digest": envelope.plan_digest,
+                "evidence_digest": assessment.evidence_digest,
+                "scenario": envelope.scenario,
+                "evidence_mode": envelope.evidence_mode,
+                "environment": envelope.environment,
+                "approved_by": envelope.approved_by,
+                "blast_radius_percent": envelope.blast_radius_percent,
+                "automatic_remediation": False,
+                "streaming_observation": envelope.snapshot.model_dump(mode="json"),
+                "findings": [finding.model_dump(mode="json") for finding in assessment.findings],
+                "slo": assessment.slo.model_dump(mode="json"),
+                "fire_drill_report": envelope.report_card,
+                "qualification_verdict": qualification_verdict,
+            },
+        },
+    }
+
+
 def scenario_data() -> dict[str, dict]:
     return json.loads(SCENARIO_PATH.read_text())
 
@@ -33,7 +108,8 @@ def record(snapshot: StreamingSnapshot) -> StreamingAssessment:
     assessment = diagnose(snapshot)
     RECENT[assessment.incident_id] = assessment
     ASSESSMENTS.labels(assessment.severity.value).inc()
-    ERROR_BUDGET_BURN.labels(snapshot.cluster).set(assessment.slo.burn_rate)
+    if assessment.slo.burn_rate is not None:
+        ERROR_BUDGET_BURN.labels(snapshot.cluster).set(assessment.slo.burn_rate)
     CONSUMER_LAG.labels(snapshot.cluster).set(snapshot.consumer_lag)
     for finding in assessment.findings:
         FINDINGS.labels(finding.code).inc()
@@ -73,6 +149,14 @@ def run_scenario(name: str) -> StreamingAssessment:
 @app.post("/v1/assess", response_model=StreamingAssessment)
 def assess(snapshot: StreamingSnapshot) -> StreamingAssessment:
     return record(snapshot)
+
+
+@app.post("/v1/fire-drills/evaluate")
+def fire_drill_evaluate(envelope: FireDrillEnvelope) -> dict[str, object]:
+    try:
+        return evaluate_fire_drill(envelope)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @app.get("/v1/incidents/{incident_id}/aria-evidence")

@@ -1,0 +1,7 @@
+{
+  "availability_percent": 99.5,
+  "error_rate_percent": 0.5,
+  "alert_fired": true,
+  "detection_seconds": 12,
+  "recovered_within_seconds": 45
+}

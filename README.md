@@ -115,6 +115,10 @@ failure, schema incompatibility, duplicate processing, poison messages,
 SLO/error-budget decisions, and human-reviewed incident communications. See
 [`examples/streaming-reliability/README.md`](examples/streaming-reliability/README.md).
 
+The cross-repository qualification flow connecting Fire Drill, OpenModelOps,
+and ARIA is documented in
+[`examples/streaming-fire-drill/README.md`](examples/streaming-fire-drill/README.md).
+
 Run the native Apple Silicon inference control plane in dependency-free
 development mode:
 

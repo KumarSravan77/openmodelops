@@ -1,10 +1,10 @@
 {
-  "healthy": {"produced_total": 1000000, "consumed_total": 999950, "consumer_lag": 50, "partition_lag": {"0": 10, "1": 15, "2": 25}, "p99_latency_ms": 120},
-  "consumer-lag": {"produced_total": 1000000, "consumed_total": 970000, "consumer_lag": 30000, "partition_lag": {"0": 10000, "1": 10000, "2": 10000}, "p99_latency_ms": 1800},
-  "hot-partition": {"produced_total": 1000000, "consumed_total": 995000, "consumer_lag": 5000, "partition_lag": {"0": 4800, "1": 100, "2": 100}},
-  "rebalance-storm": {"produced_total": 100000, "consumed_total": 99950, "consumer_lag": 50, "rebalances_5m": 12, "p99_latency_ms": 1400},
-  "broker-failure": {"produced_total": 100000, "consumed_total": 80000, "consumer_lag": 20000, "under_replicated_partitions": 18, "offline_partitions": 3, "disk_used_percent": 92},
-  "schema-break": {"produced_total": 100000, "consumed_total": 94000, "consumer_lag": 6000, "schema_errors_5m": 850, "dlq_rate": 0.06},
-  "duplicate-processing": {"produced_total": 100000, "consumed_total": 100000, "consumer_lag": 0, "duplicate_rate": 0.025},
-  "poison-message": {"produced_total": 100000, "consumed_total": 98000, "consumer_lag": 2000, "dlq_rate": 0.02}
+  "healthy": {"produced_total": 1000000, "consumed_total": 999950, "eligible_events_total": 1000000, "completed_within_objective_total": 999950, "consumer_lag": 50, "partition_lag": {"0": 10, "1": 15, "2": 25}, "p99_latency_ms": 120},
+  "consumer-lag": {"produced_total": 1000000, "consumed_total": 970000, "eligible_events_total": 1000000, "completed_within_objective_total": 970000, "consumer_lag": 30000, "partition_lag": {"0": 10000, "1": 10000, "2": 10000}, "p99_latency_ms": 1800},
+  "hot-partition": {"produced_total": 1000000, "consumed_total": 995000, "eligible_events_total": 1000000, "completed_within_objective_total": 995000, "consumer_lag": 5000, "partition_lag": {"0": 4800, "1": 100, "2": 100}},
+  "rebalance-storm": {"produced_total": 100000, "consumed_total": 99950, "eligible_events_total": 100000, "completed_within_objective_total": 99950, "consumer_lag": 50, "rebalances_5m": 12, "p99_latency_ms": 1400},
+  "broker-failure": {"produced_total": 100000, "consumed_total": 80000, "eligible_events_total": 100000, "completed_within_objective_total": 80000, "consumer_lag": 20000, "under_replicated_partitions": 18, "offline_partitions": 3, "disk_used_percent": 92},
+  "schema-break": {"produced_total": 100000, "consumed_total": 94000, "eligible_events_total": 100000, "completed_within_objective_total": 94000, "consumer_lag": 6000, "schema_errors_5m": 850, "dlq_rate": 0.06},
+  "duplicate-processing": {"produced_total": 100000, "consumed_total": 100000, "eligible_events_total": 100000, "completed_within_objective_total": 100000, "consumer_lag": 0, "duplicate_rate": 0.025},
+  "poison-message": {"produced_total": 100000, "consumed_total": 98000, "eligible_events_total": 100000, "completed_within_objective_total": 98000, "consumer_lag": 2000, "dlq_rate": 0.02}
 }
