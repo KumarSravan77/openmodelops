@@ -84,6 +84,7 @@ def test_mlx_backend_applies_chat_template_and_reports_tokenizer_counts(monkeypa
 
         def apply_chat_template(self, messages, **kwargs):
             calls.update(kwargs)
+            calls["messages"] = messages
             return f"templated:{messages[0]['content']}"
 
         def encode(self, value):
@@ -100,3 +101,57 @@ def test_mlx_backend_applies_chat_template_and_reports_tokenizer_counts(monkeypa
     assert calls["enable_thinking"] is False
     assert result.prompt_tokens == 2
     assert result.completion_tokens == 3
+
+
+def test_mlx_backend_preserves_chat_roles(monkeypatch) -> None:
+    seen: dict = {}
+
+    class Tokenizer:
+        has_chat_template = True
+
+        def apply_chat_template(self, messages, **kwargs):
+            seen["messages"] = messages
+            return "formatted"
+
+        def encode(self, value):
+            return value.split()
+
+    fake = ModuleType("mlx_lm")
+    fake.load = lambda _: (object(), Tokenizer())
+    fake.generate = lambda *_args, **_kwargs: "answer"
+    monkeypatch.setitem(sys.modules, "mlx_lm", fake)
+    messages = [{"role": "system", "content": "Be concise"}, {"role": "user", "content": "Hello"}]
+    asyncio.run(MLXBackend("model").generate(messages, 8))
+    assert seen["messages"] == messages
+
+
+def test_mlx_backend_disallows_unvalidated_parallel_generation(monkeypatch) -> None:
+    fake = ModuleType("mlx_lm")
+    fake.load = lambda _: (object(), object())
+    fake.generate = lambda *_args, **_kwargs: "answer"
+    monkeypatch.setitem(sys.modules, "mlx_lm", fake)
+    monkeypatch.setenv("METAL_MAXIMUM_SLOTS", "2")
+    import pytest
+
+    with pytest.raises(ValueError, match="single-slot"):
+        create_app(HARDWARE, ModelProfile("model", 0.6), MLXBackend("model"))
+
+
+def test_scheduler_reports_queue_wait() -> None:
+    class SlowBackend:
+        async def generate(self, prompt, maximum_tokens):
+            await asyncio.sleep(0.02)
+            from platforms.metal_runtime.backend import GenerationResult
+
+            return GenerationResult("ok", 1, 1)
+
+    async def exercise() -> tuple[float, float]:
+        scheduler = BoundedScheduler(SlowBackend(), slots=1, queue_limit=2)
+        await scheduler.start()
+        first, second = await asyncio.gather(scheduler.submit("a", 1), scheduler.submit("b", 1))
+        await scheduler.stop()
+        return first.queue_wait_seconds, second.queue_wait_seconds
+
+    first_wait, second_wait = asyncio.run(exercise())
+    assert first_wait >= 0
+    assert second_wait >= 0.015

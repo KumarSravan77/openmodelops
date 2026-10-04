@@ -4,16 +4,19 @@ import asyncio
 from dataclasses import dataclass
 from typing import Protocol
 
+Prompt = str | list[dict[str, str]]
+
 
 @dataclass(frozen=True)
 class GenerationResult:
     text: str
     prompt_tokens: int
     completion_tokens: int
+    queue_wait_seconds: float = 0.0
 
 
 class InferenceBackend(Protocol):
-    async def generate(self, prompt: str, maximum_tokens: int) -> GenerationResult: ...
+    async def generate(self, prompt: Prompt, maximum_tokens: int) -> GenerationResult: ...
 
 
 def estimate_tokens(text: str) -> int:
@@ -21,10 +24,11 @@ def estimate_tokens(text: str) -> int:
 
 
 class DevelopmentBackend:
-    async def generate(self, prompt: str, maximum_tokens: int) -> GenerationResult:
+    async def generate(self, prompt: Prompt, maximum_tokens: int) -> GenerationResult:
         await asyncio.sleep(0)
-        answer = f"Development backend received {estimate_tokens(prompt)} estimated prompt tokens."
-        return GenerationResult(answer, estimate_tokens(prompt), min(maximum_tokens, estimate_tokens(answer)))
+        text = prompt if isinstance(prompt, str) else "\n".join(item["content"] for item in prompt)
+        answer = f"Development backend received {estimate_tokens(text)} estimated prompt tokens."
+        return GenerationResult(answer, estimate_tokens(text), min(maximum_tokens, estimate_tokens(answer)))
 
 
 class MLXBackend:
@@ -38,12 +42,13 @@ class MLXBackend:
         self._generate = generate
         self._model, self._tokenizer = load(model_id)
 
-    async def generate(self, prompt: str, maximum_tokens: int) -> GenerationResult:
+    async def generate(self, prompt: Prompt, maximum_tokens: int) -> GenerationResult:
         def run() -> GenerationResult:
-            formatted_prompt = prompt
+            messages = [{"role": "user", "content": prompt}] if isinstance(prompt, str) else prompt
+            formatted_prompt = prompt if isinstance(prompt, str) else "\n".join(item["content"] for item in prompt)
             if self._tokenizer.has_chat_template:
                 formatted_prompt = self._tokenizer.apply_chat_template(
-                    [{"role": "user", "content": prompt}],
+                    messages,
                     tokenize=False,
                     add_generation_prompt=True,
                     enable_thinking=False,

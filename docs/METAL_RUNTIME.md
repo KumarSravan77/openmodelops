@@ -9,11 +9,15 @@ for an inference process to fail or force macOS into heavy swap.
 - Safe Apple hardware discovery without exposing serial numbers or identifiers.
 - Model-weight and KV-cache memory estimation.
 - Admission, context clamping, multimodal reserve and concurrency limits.
-- Bounded two-slot asynchronous scheduler with queue backpressure and deadlines.
+- Bounded scheduler with queue backpressure and deadlines. The development
+  backend supports two workers; MLX is limited to one generation worker until
+  safe native batching is demonstrated.
 - Privacy-safe LRU prompt-cache metadata using SHA-256 keys.
 - Lazy MLX-LM backend and a deterministic development backend.
 - OpenAI-compatible model listing and non-streaming chat completions.
 - Runtime planning/profile endpoints and Prometheus telemetry.
+- Local benchmark harness for one or more client concurrency levels, including
+  latency, aggregate output throughput, error counts and queue-wait time.
 - Unit, concurrency, API-contract and cache-isolation tests.
 
 ## Native setup
@@ -67,7 +71,7 @@ curl -X POST http://127.0.0.1:8008/v1/chat/completions \
 | `METAL_KV_BYTES_PER_TOKEN_FP16` | `65536` | Architecture-specific FP16 KV cost |
 | `METAL_SYSTEM_RESERVE_GB` | `6` | Memory protected for macOS and applications |
 | `METAL_RUNTIME_RESERVE_GB` | `2` | Temporary activation/runtime reserve |
-| `METAL_MAXIMUM_SLOTS` | `2` | Concurrent generation workers |
+| `METAL_MAXIMUM_SLOTS` | `1` for MLX, `2` for development | Concurrent generation workers; MLX rejects values other than 1 |
 | `METAL_QUEUE_LIMIT` | `20` | Maximum waiting requests |
 
 Memory estimates are admission safeguards, not measured capacity claims. A
@@ -91,6 +95,38 @@ Validated on 2026-09-21 using an Apple M3 Pro with 36 GB unified memory and an
 The 0.6B checkpoint is an integration proof, not a 27B performance benchmark.
 No 27B weights have been downloaded and no 27B throughput, context or quality
 claim is made by this evidence.
+
+## Reproducible local benchmark
+
+Start the native MLX server above using a model that fits your Mac. In another
+terminal, run:
+
+```bash
+.venv/bin/python -m platforms.metal_runtime.benchmark \
+  --concurrency 1,2 --requests 4 --max-tokens 48 --require-real-model
+```
+
+The harness only connects to a loopback endpoint. It varies prompts, omits
+prompt/response text from results, and refuses the development backend when
+`--require-real-model` is used. Report the model and hardware with every run;
+do not compare different models by throughput alone. This is a short smoke
+benchmark, not a sustained capacity, answer-quality, or long-context test.
+
+Measured 2026-10-03 on Apple M3 Pro, 36 GB unified memory, 18 GPU cores, with
+`mlx-community/Qwen3-0.6B-4bit` and one MLX generation slot. Each level used
+four short requests with up to 48 output tokens, after one warmup request:
+
+| Client concurrency | Successes / errors | p50 / p95 latency | Aggregate output throughput | p95 queue wait |
+|---:|---:|---:|---:|---:|
+| 1 | 4 / 0 | 0.240 / 0.376 s | 112.3 tokens/s | 0.000 s |
+| 2 | 4 / 0 | 0.541 / 0.660 s | 139.7 tokens/s | 0.228 s |
+
+The two-client throughput is an observed short-run aggregate, **not** proof of
+parallel generation: requests queue behind a single MLX worker. These small
+samples are not stable capacity estimates. Time to first token is unmeasured
+because the endpoint does not stream; the SHA-256 cache is metadata only, not
+KV-cache reuse. Larger models, longer prompts, sustained loads, memory
+pressure, quality and energy need separate qualification.
 
 ## Next runtime milestones
 

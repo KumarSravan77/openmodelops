@@ -21,6 +21,7 @@ LATENCY = Histogram("openmodelops_metal_request_duration_seconds", "Metal runtim
 ACTIVE = Gauge("openmodelops_metal_active_requests", "Active Metal inference requests")
 QUEUED = Gauge("openmodelops_metal_queued_requests", "Queued Metal inference requests")
 CLAMPED = Counter("openmodelops_metal_context_clamped_total", "Requests with generation capacity clamped")
+QUEUE_WAIT = Histogram("openmodelops_metal_queue_wait_seconds", "Time waiting for a generation slot")
 
 
 class ChatMessage(BaseModel):
@@ -73,8 +74,11 @@ def create_app(
 ) -> FastAPI:
     detected = hardware or detect_hardware()
     selected_model = model or _model_profile()
-    slots = int(os.getenv("METAL_MAXIMUM_SLOTS", "2"))
-    scheduler = BoundedScheduler(backend or _backend(selected_model.model_id), slots, int(os.getenv("METAL_QUEUE_LIMIT", "20")))
+    selected_backend = backend or _backend(selected_model.model_id)
+    slots = int(os.getenv("METAL_MAXIMUM_SLOTS", "1" if isinstance(selected_backend, MLXBackend) else "2"))
+    if isinstance(selected_backend, MLXBackend) and slots != 1:
+        raise ValueError("MLX generation is single-slot until safe native batching is validated")
+    scheduler = BoundedScheduler(selected_backend, slots, int(os.getenv("METAL_QUEUE_LIMIT", "20")))
     planner = MemoryPlanner(
         detected.memory_gb,
         selected_model,
@@ -145,9 +149,9 @@ def create_app(
             raise HTTPException(status_code=404, detail="model not loaded")
         prompt = _prompt(request.messages)
         prompt_tokens = estimate_tokens(prompt)
-        decision = planner.decide(
-            AdmissionRequest(prompt_tokens, request.max_tokens, scheduler.active, request.multimodal)
-        )
+        # A queued MLX request consumes no KV memory until its single slot starts.
+        active_slots = 0 if isinstance(selected_backend, MLXBackend) else scheduler.active
+        decision = planner.decide(AdmissionRequest(prompt_tokens, request.max_tokens, active_slots, request.multimodal))
         if not decision.admitted:
             REQUESTS.labels("rejected", "miss").inc()
             raise HTTPException(status_code=429, detail={"reason": decision.reason, "plan": decision.__dict__})
@@ -157,7 +161,7 @@ def create_app(
         cached = cache.lookup(selected_model.model_id, prompt) is not None
         started = time.perf_counter()
         try:
-            result = await scheduler.submit(prompt, maximum_tokens)
+            result = await scheduler.submit([message.model_dump() for message in request.messages], maximum_tokens)
         except OverflowError as exc:
             REQUESTS.labels("queue_full", "hit" if cached else "miss").inc()
             raise HTTPException(status_code=429, detail=str(exc)) from exc
@@ -165,6 +169,7 @@ def create_app(
             REQUESTS.labels("timeout", "hit" if cached else "miss").inc()
             raise HTTPException(status_code=504, detail="inference deadline exceeded") from exc
         LATENCY.observe(time.perf_counter() - started)
+        QUEUE_WAIT.observe(result.queue_wait_seconds)
         REQUESTS.labels("success", "hit" if cached else "miss").inc()
         cache.record(selected_model.model_id, prompt, result.prompt_tokens)
         completion_id = f"chatcmpl-{uuid.uuid4().hex}"
@@ -183,6 +188,7 @@ def create_app(
                 "cache_hit": cached,
                 "admission": decision.reason,
                 "granted_context": decision.granted_context,
+                "queue_wait_seconds": round(result.queue_wait_seconds, 6),
             },
         }
 
