@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import threading
 import time
 from dataclasses import dataclass, replace
 
@@ -13,6 +14,15 @@ class WorkItem:
     maximum_tokens: int
     result: asyncio.Future[GenerationResult]
     enqueued_at: float
+    token_events: asyncio.Queue[tuple[str, int] | None] | None = None
+    cancel_event: threading.Event | None = None
+
+
+@dataclass
+class StreamHandle:
+    token_events: asyncio.Queue[tuple[str, int] | None]
+    result: asyncio.Future[GenerationResult]
+    cancel_event: threading.Event
 
 
 class BoundedScheduler:
@@ -43,6 +53,16 @@ class BoundedScheduler:
         await self.queue.put(WorkItem(prompt, maximum_tokens, future, time.perf_counter()))
         return await asyncio.wait_for(future, timeout_seconds)
 
+    async def submit_stream(self, prompt: Prompt, maximum_tokens: int) -> StreamHandle:
+        if self.queue.full():
+            raise OverflowError("inference queue is full")
+        loop = asyncio.get_running_loop()
+        handle = StreamHandle(asyncio.Queue(), loop.create_future(), threading.Event())
+        await self.queue.put(WorkItem(
+            prompt, maximum_tokens, handle.result, time.perf_counter(), handle.token_events, handle.cancel_event
+        ))
+        return handle
+
     async def _worker(self) -> None:
         while True:
             item = await self.queue.get()
@@ -50,11 +70,28 @@ class BoundedScheduler:
             try:
                 if not item.result.cancelled():
                     waited = time.perf_counter() - item.enqueued_at
-                    result = await self.backend.generate(item.prompt, item.maximum_tokens)
-                    item.result.set_result(replace(result, queue_wait_seconds=waited))
+                    if item.token_events is None:
+                        result = await self.backend.generate(item.prompt, item.maximum_tokens)
+                    else:
+                        loop = asyncio.get_running_loop()
+
+                        def emit(
+                            text: str, index: int,
+                            target: asyncio.Queue[tuple[str, int] | None] = item.token_events,
+                            event_loop: asyncio.AbstractEventLoop = loop,
+                        ) -> None:
+                            event_loop.call_soon_threadsafe(target.put_nowait, (text, index))
+
+                        result = await self.backend.generate(
+                            item.prompt, item.maximum_tokens, on_token=emit, cancel_event=item.cancel_event
+                        )
+                    if not item.result.cancelled():
+                        item.result.set_result(replace(result, queue_wait_seconds=waited))
             except Exception as exc:  # noqa: BLE001 - isolate backend failures at the worker boundary
                 if not item.result.cancelled():
                     item.result.set_exception(exc)
             finally:
+                if item.token_events is not None:
+                    asyncio.get_running_loop().call_soon(item.token_events.put_nowait, None)
                 self.active -= 1
                 self.queue.task_done()

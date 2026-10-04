@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import sys
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 
 from fastapi.testclient import TestClient
 
@@ -66,14 +67,19 @@ def test_openai_compatible_completion_and_cache_hit() -> None:
     assert profile.json()["hardware"]["memory_gb"] == 36
 
 
-def test_streaming_fails_explicitly_until_implemented() -> None:
+def test_streaming_returns_token_chunk_usage_and_done() -> None:
     app = create_app(HARDWARE, ModelProfile("test-qwen", 8), DevelopmentBackend())
     with TestClient(app) as client:
         response = client.post(
             "/v1/chat/completions",
             json={"model": "test-qwen", "messages": [{"role": "user", "content": "hello"}], "stream": True},
         )
-    assert response.status_code == 501
+    assert response.status_code == 200
+    events = [line[6:] for line in response.text.splitlines() if line.startswith("data: ")]
+    assert events[-1] == "[DONE]"
+    chunks = [json.loads(event) for event in events[:-1]]
+    assert chunks[0]["choices"][0]["delta"]["content"].startswith("Development backend")
+    assert chunks[-1]["usage"]["completion_tokens"] > 0
 
 
 def test_mlx_backend_applies_chat_template_and_reports_tokenizer_counts(monkeypatch) -> None:
@@ -92,7 +98,10 @@ def test_mlx_backend_applies_chat_template_and_reports_tokenizer_counts(monkeypa
 
     fake = ModuleType("mlx_lm")
     fake.load = lambda _: (object(), Tokenizer())
-    fake.generate = lambda _model, _tokenizer, **kwargs: f"answer:{kwargs['prompt']}"
+    fake.stream_generate = lambda _model, _tokenizer, **_kwargs: iter([
+        SimpleNamespace(text="answer:", generation_tokens=1, prompt_tokens=2, finish_reason=None),
+        SimpleNamespace(text="templated:hello", generation_tokens=2, prompt_tokens=2, finish_reason="length"),
+    ])
     monkeypatch.setitem(sys.modules, "mlx_lm", fake)
 
     result = asyncio.run(MLXBackend("model").generate("hello", 8))
@@ -100,7 +109,9 @@ def test_mlx_backend_applies_chat_template_and_reports_tokenizer_counts(monkeypa
     assert calls["add_generation_prompt"] is True
     assert calls["enable_thinking"] is False
     assert result.prompt_tokens == 2
-    assert result.completion_tokens == 3
+    assert result.completion_tokens == 2
+    assert result.first_token_seconds is not None
+    assert result.time_per_output_token_seconds is not None
 
 
 def test_mlx_backend_preserves_chat_roles(monkeypatch) -> None:
@@ -118,7 +129,9 @@ def test_mlx_backend_preserves_chat_roles(monkeypatch) -> None:
 
     fake = ModuleType("mlx_lm")
     fake.load = lambda _: (object(), Tokenizer())
-    fake.generate = lambda *_args, **_kwargs: "answer"
+    fake.stream_generate = lambda *_args, **_kwargs: iter([
+        SimpleNamespace(text="answer", generation_tokens=1, prompt_tokens=1, finish_reason="length")
+    ])
     monkeypatch.setitem(sys.modules, "mlx_lm", fake)
     messages = [{"role": "system", "content": "Be concise"}, {"role": "user", "content": "Hello"}]
     asyncio.run(MLXBackend("model").generate(messages, 8))
@@ -128,7 +141,7 @@ def test_mlx_backend_preserves_chat_roles(monkeypatch) -> None:
 def test_mlx_backend_disallows_unvalidated_parallel_generation(monkeypatch) -> None:
     fake = ModuleType("mlx_lm")
     fake.load = lambda _: (object(), object())
-    fake.generate = lambda *_args, **_kwargs: "answer"
+    fake.stream_generate = lambda *_args, **_kwargs: iter([])
     monkeypatch.setitem(sys.modules, "mlx_lm", fake)
     monkeypatch.setenv("METAL_MAXIMUM_SLOTS", "2")
     import pytest

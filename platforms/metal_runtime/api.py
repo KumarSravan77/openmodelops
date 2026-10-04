@@ -1,12 +1,16 @@
 from __future__ import annotations
 
+import asyncio
+import json
 import os
 import time
 import uuid
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Response
+from fastapi.responses import StreamingResponse
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Gauge, Histogram, generate_latest
 from pydantic import BaseModel, Field
 
@@ -22,6 +26,13 @@ ACTIVE = Gauge("openmodelops_metal_active_requests", "Active Metal inference req
 QUEUED = Gauge("openmodelops_metal_queued_requests", "Queued Metal inference requests")
 CLAMPED = Counter("openmodelops_metal_context_clamped_total", "Requests with generation capacity clamped")
 QUEUE_WAIT = Histogram("openmodelops_metal_queue_wait_seconds", "Time waiting for a generation slot")
+FIRST_TOKEN = Histogram(
+    "openmodelops_metal_backend_first_token_seconds", "Time from backend start to first generated token"
+)
+TPOT = Histogram(
+    "openmodelops_metal_backend_time_per_output_token_seconds",
+    "Mean time between generated output tokens (excluding the first)",
+)
 
 
 class ChatMessage(BaseModel):
@@ -141,10 +152,8 @@ def create_app(
             AdmissionRequest(request.prompt_tokens, request.max_tokens, request.active_slots, request.multimodal)
         ).__dict__
 
-    @application.post("/v1/chat/completions")
-    async def chat(request: ChatCompletionRequest) -> dict:
-        if request.stream:
-            raise HTTPException(status_code=501, detail="streaming is planned for the native batch milestone")
+    @application.post("/v1/chat/completions", response_model=None)
+    async def chat(request: ChatCompletionRequest) -> dict | StreamingResponse:
         if request.model != selected_model.model_id:
             raise HTTPException(status_code=404, detail="model not loaded")
         prompt = _prompt(request.messages)
@@ -160,23 +169,87 @@ def create_app(
             CLAMPED.inc()
         cached = cache.lookup(selected_model.model_id, prompt) is not None
         started = time.perf_counter()
+        messages = [message.model_dump() for message in request.messages]
+        completion_id = f"chatcmpl-{uuid.uuid4().hex}"
+        created = int(time.time())
+
+        def record_result(result) -> dict:
+            LATENCY.observe(time.perf_counter() - started)
+            QUEUE_WAIT.observe(result.queue_wait_seconds)
+            if result.first_token_seconds is not None:
+                FIRST_TOKEN.observe(result.first_token_seconds)
+            if result.time_per_output_token_seconds is not None:
+                TPOT.observe(result.time_per_output_token_seconds)
+            REQUESTS.labels("success", "hit" if cached else "miss").inc()
+            cache.record(selected_model.model_id, prompt, result.prompt_tokens)
+            return {
+                "cache_hit": cached,
+                "admission": decision.reason,
+                "granted_context": decision.granted_context,
+                "queue_wait_seconds": round(result.queue_wait_seconds, 6),
+                "backend_first_token_seconds": round(result.first_token_seconds, 6)
+                if result.first_token_seconds is not None else None,
+                "backend_time_per_output_token_seconds": round(result.time_per_output_token_seconds, 6)
+                if result.time_per_output_token_seconds is not None else None,
+            }
+
+        if request.stream:
+            try:
+                handle = await scheduler.submit_stream(messages, maximum_tokens)
+            except OverflowError as exc:
+                REQUESTS.labels("queue_full", "hit" if cached else "miss").inc()
+                raise HTTPException(status_code=429, detail=str(exc)) from exc
+
+            async def events() -> AsyncIterator[str]:
+                try:
+                    while True:
+                        event = await asyncio.wait_for(handle.token_events.get(), 300)
+                        if event is None:
+                            break
+                        content, token_index = event
+                        chunk = {
+                            "id": completion_id, "object": "chat.completion.chunk", "created": created,
+                            "model": selected_model.model_id,
+                            "choices": [{"index": 0, "delta": {"content": content}, "finish_reason": None}],
+                            "openmodelops": {"token_index": token_index},
+                        }
+                        yield f"data: {json.dumps(chunk)}\n\n"
+                    result = await handle.result
+                    final = {
+                        "id": completion_id, "object": "chat.completion.chunk", "created": created,
+                        "model": selected_model.model_id,
+                        "choices": [{"index": 0, "delta": {}, "finish_reason": "stop"}],
+                        "usage": {
+                            "prompt_tokens": result.prompt_tokens,
+                            "completion_tokens": result.completion_tokens,
+                            "total_tokens": result.prompt_tokens + result.completion_tokens,
+                        },
+                        "openmodelops": record_result(result),
+                    }
+                    yield f"data: {json.dumps(final)}\n\n"
+                    yield "data: [DONE]\n\n"
+                except Exception:  # noqa: BLE001 - SSE cannot change status after headers
+                    REQUESTS.labels("error", "hit" if cached else "miss").inc()
+                    yield 'data: {"error":{"message":"inference stream failed"}}\n\n'
+                finally:
+                    handle.cancel_event.set()
+                    if not handle.result.done():
+                        handle.result.cancel()
+
+            return StreamingResponse(events(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
+
         try:
-            result = await scheduler.submit([message.model_dump() for message in request.messages], maximum_tokens)
+            result = await scheduler.submit(messages, maximum_tokens)
         except OverflowError as exc:
             REQUESTS.labels("queue_full", "hit" if cached else "miss").inc()
             raise HTTPException(status_code=429, detail=str(exc)) from exc
         except TimeoutError as exc:
             REQUESTS.labels("timeout", "hit" if cached else "miss").inc()
             raise HTTPException(status_code=504, detail="inference deadline exceeded") from exc
-        LATENCY.observe(time.perf_counter() - started)
-        QUEUE_WAIT.observe(result.queue_wait_seconds)
-        REQUESTS.labels("success", "hit" if cached else "miss").inc()
-        cache.record(selected_model.model_id, prompt, result.prompt_tokens)
-        completion_id = f"chatcmpl-{uuid.uuid4().hex}"
         return {
             "id": completion_id,
             "object": "chat.completion",
-            "created": int(time.time()),
+            "created": created,
             "model": selected_model.model_id,
             "choices": [{"index": 0, "message": {"role": "assistant", "content": result.text}, "finish_reason": "stop"}],
             "usage": {
@@ -184,12 +257,7 @@ def create_app(
                 "completion_tokens": result.completion_tokens,
                 "total_tokens": result.prompt_tokens + result.completion_tokens,
             },
-            "openmodelops": {
-                "cache_hit": cached,
-                "admission": decision.reason,
-                "granted_context": decision.granted_context,
-                "queue_wait_seconds": round(result.queue_wait_seconds, 6),
-            },
+            "openmodelops": record_result(result),
         }
 
     return application
